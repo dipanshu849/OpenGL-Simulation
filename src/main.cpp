@@ -526,7 +526,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
 
   // LightPosition
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
-  glm::vec3 lightPos = glm::vec3(0.0f, 5.0f, 0.0f);
+  glm::vec3 lightPos = glm::vec3(-3.5f, 4.5f, -1.5f);
   glUniform3f(location, lightPos.x, lightPos.y, lightPos.z);
 
 
@@ -596,6 +596,8 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> bench;
   Mesh3D<GLfloat> podium;
   Mesh3D<GLfloat> table;
+  Mesh3D<GLfloat> door;
+  Mesh3D<GLfloat> light;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.07f, 0.057f, 0.05f);
@@ -612,11 +614,26 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   table.mScale = glm::vec3(0.07f, 0.06f, 0.06f);
   table.mOffset = glm::vec3(-3.4f, 0.0f, -3.9f);
   table.mModelPath = "Models/table.obj";
-  table.mTexturePath = "Models/textures/table/table_combined_texture_new.jpeg";
+  table.mTexturePath = "Models/textures/table/table_combined_texture_new_new.jpeg";
+
+  door.name = "Door";
+  door.mScale = glm::vec3(0.07f, 0.065f, 0.06f);
+  door.mOffset = glm::vec3(-0.96f, 0.0f, -1.7f);
+  door.mRotate = 300.0f;
+  door.mModelPath = "Models/door_textured.obj";
+  door.mTexturePath = "Models/textures/door/combined_texture.jpeg";
+
+  light.name = "Light";
+  light.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
+  light.mOffset = glm::vec3(-4.0f, 4.5f, -2.0f);
+  light.mModelPath = "Models/light.obj";
+  light.mTexturePath = "Models/textures/light/texture.png";
 
   meshes.push_back(bench);
   meshes.push_back(podium);
   meshes.push_back(table);
+  meshes.push_back(door);
+  meshes.push_back(light);
 }
 
 
