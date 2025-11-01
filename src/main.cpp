@@ -36,8 +36,8 @@
 
 struct App
 {
-  int mScreenWidth = 800;
-  int mScreenHeight = 600;
+  int mScreenWidth = 1080;
+  int mScreenHeight = 720;
   
   const char* mTitle = "CL-3";
 
@@ -598,6 +598,7 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> table;
   Mesh3D<GLfloat> door;
   Mesh3D<GLfloat> light;
+  Mesh3D<GLfloat> board;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.07f, 0.057f, 0.05f);
@@ -629,11 +630,19 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   light.mModelPath = "Models/light.obj";
   light.mTexturePath = "Models/textures/light/texture.png";
 
-  meshes.push_back(bench);
+  board.name = "Board";
+  board.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  board.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
+  board.mRotate = 180.0f;
+  board.mModelPath = "Models/Board.obj";
+  board.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
+
+  meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
   meshes.push_back(podium);
   meshes.push_back(table);
   meshes.push_back(door);
   meshes.push_back(light);
+  meshes.push_back(board);
 }
 
 
@@ -665,7 +674,7 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
   meshes.erase(meshes.begin());
 
   float distbwBenchRow = 1.28f;
-  float distbwBenchCol = 2.88f;
+  float distbwBenchCol = 2.89f;
 
   float refX = refBench.mOffset.x;
   float refY = refBench.mOffset.y;
@@ -673,7 +682,11 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
 
   for (int i = 0; i < 25; i++)
   {
-    if (i == 0 || i == 5) continue; // exceptions !!
+    // exceptions !! 
+    if (i == 0 || i == 5) continue; // these benches are no there in class
+    if (i / 5 == 2) // Column 2 and column 3 have less spacing then other
+      refX = -0.05f;
+
     float newX = refX - (distbwBenchCol * (i / 5));
     float newY = refY;
     float newZ = refZ - (distbwBenchRow * (i % 5));
