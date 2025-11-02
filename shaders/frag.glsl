@@ -13,29 +13,49 @@ uniform vec3 u_lightColor;
 uniform vec3 u_viewPos;
 uniform int u_isPhong;
 
+const int numLights = 9;
+const float distBwLightRow = 4.0f;
+const float distBwLightCol = 4.0f;
+
 vec3 PhongShading() 
 {
   // ambient
-  float ambientStrength = 0.1;
+  float ambientStrength = 0.2;
   vec3 ambient = ambientStrength * u_lightColor;
 
-  // diffuse [point light]
-  vec3 norm = normalize(o_normals);
-  vec3 lightDir = normalize(u_lightPos - o_fragPos); // both in world space
-  float diff = max(dot(norm, lightDir), 0.0);
-  vec3 diffuse = diff * u_lightColor;
+  vec3 diffuse = vec3(0.0f);
+  vec3 specular = vec3(0.0f);
 
-  // specular 
-  float specularStrength = 0.5;
-  vec3 viewDir = normalize(u_viewPos - o_fragPos);
-  vec3 reflectDir = reflect(-lightDir, norm);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2);
-  vec3 specular = specularStrength * spec * u_lightColor;
+  vec3 new_lightPos = vec3(0.0f);
+  float refX = u_lightPos.x;
+  float refY = u_lightPos.y;
+  float refZ = u_lightPos.z;
 
+  for (int i = 0; i < numLights; i++)
+  {
+    new_lightPos.x = refX -  (distBwLightCol * (i / 3));
+    new_lightPos.y = refY;
+    new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
+    
+    // diffuse [point light]
+    float diffuseStrength = 0.2;
+    vec3 norm = normalize(o_normals);
+    vec3 lightDir = normalize(new_lightPos - o_fragPos); // both in world space
+    float diff = max(dot(norm, lightDir), 0.0);
+    diffuse += diffuseStrength * diff * u_lightColor;
+
+    // specular 
+    float specularStrength = 0.1;
+    vec3 viewDir = normalize(u_viewPos - o_fragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
+    specular += specularStrength * spec * u_lightColor;
+  }
 
   vec3 result = (ambient + diffuse + specular);
   return result;
 }
+
 
 void main() 
 {

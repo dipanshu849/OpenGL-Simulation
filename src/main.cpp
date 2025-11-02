@@ -89,8 +89,8 @@ struct Grid
   std::vector<glm::vec3> mVertexDataH;
   std::vector<glm::vec3> mVertexDataV;
 
-  int mROW = 10;
-  int mCOL = 15;
+  int mROW = 11;
+  int mCOL = 16;
   float mTileSize = 1.0f;
 };
 
@@ -396,6 +396,18 @@ GLuint createShaderProgram(const std::string& vertexShaderSource, const std::str
     GLuint myVertexShader   = CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
     GLuint myFragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
+    // error checking for fragment shader
+    int success;
+    char infoLog[512];
+    glGetShaderiv(myFragmentShader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        glGetShaderInfoLog(myFragmentShader, 512, NULL, infoLog);
+        std::cout << "Compilation of frag failed\n" << infoLog << std::endl;
+    }
+    //
+
     glAttachShader(programObject, myVertexShader);
     glAttachShader(programObject, myFragmentShader);
     glLinkProgram(programObject);
@@ -526,7 +538,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
 
   // LightPosition
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
-  glm::vec3 lightPos = glm::vec3(-3.5f, 4.5f, -1.5f);
+  glm::vec3 lightPos = glm::vec3(-3.5f, 6.5f, -1.5f);
   //glm::vec3 lightPos = glm::vec3(-3.5f, 1.0f, -1.5f);
   glUniform3f(location, lightPos.x, lightPos.y, lightPos.z);
 
@@ -602,26 +614,26 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> board;
 
   bench.name = "Bench";
-  bench.mScale = glm::vec3(0.07f, 0.057f, 0.05f);
+  bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
   bench.mOffset = glm::vec3(-0.6f, 0.1f, -2.6f);
   bench.mModelPath = "Models/BenchTextured.obj";
   bench.mTexturePath = "Models/textures/combinedBenchTexture.png";
 
   podium.name = "Podium";
-  podium.mScale = glm::vec3(0.14f, 0.14f, 0.11f);
-  podium.mOffset = glm::vec3(-2.34f, 0.0f, -1.7f);
+  podium.mScale = glm::vec3(0.16f, 0.16f, 0.16f);
+  podium.mOffset = glm::vec3(-2.2f, 0.0f, -1.05f);
   podium.mRotate = 180.0f;
   podium.mModelPath = "Models/podium.obj";
   podium.mTexturePath = "Models/textures/podium/podium_combined_texture_2.jpeg";
 
   table.name = "Table";
-  table.mScale = glm::vec3(0.07f, 0.06f, 0.06f);
-  table.mOffset = glm::vec3(-3.4f, 0.0f, -3.9f);
+  table.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
+  table.mOffset = glm::vec3(-3.9f, 0.0f, -4.1f);
   table.mModelPath = "Models/table.obj";
   table.mTexturePath = "Models/textures/table/table_combined_texture_new_new.jpeg";
 
   door.name = "Door";
-  door.mScale = glm::vec3(0.07f, 0.065f, 0.06f);
+  door.mScale = glm::vec3(0.07f, 0.07f, 0.06f);
   door.mOffset = glm::vec3(-0.96f, 0.0f, -1.7f);
   door.mRotate = 300.0f;
   door.mModelPath = "Models/door_textured.obj";
@@ -629,12 +641,12 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
 
   light.name = "Light";
   light.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
-  light.mOffset = glm::vec3(-4.0f, 4.5f, -2.0f);
+  light.mOffset = glm::vec3(-4.0f, 6.5f, -2.0f);
   light.mModelPath = "Models/light.obj";
   light.mTexturePath = "Models/textures/light/texture.png";
 
   board.name = "Board";
-  board.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  board.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
   board.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
   board.mRotate = 180.0f;
   board.mModelPath = "Models/Board.obj";
@@ -676,8 +688,8 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> refBench = meshes[0];
   meshes.erase(meshes.begin());
 
-  float distbwBenchRow = 1.28f;
-  float distbwBenchCol = 2.89f;
+  float distbwBenchRow = 1.5f;
+  float distbwBenchCol = 3.2f;
 
   float refX = refBench.mOffset.x;
   float refY = refBench.mOffset.y;
@@ -688,7 +700,7 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
     // exceptions !! 
     if (i == 0 || i == 5) continue; // these benches are no there in class
     if (i / 5 == 2) // Column 2 and column 3 have less spacing then other
-      refX = -0.05f;
+      refX = 0.07f;
 
     float newX = refX - (distbwBenchCol * (i / 5));
     float newY = refY;
@@ -699,6 +711,28 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
   }
 }
 
+
+void LightPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+{
+  Mesh3D<GLfloat> refLight = meshes[3]; // as the starting bench was erased
+
+  float distbwLightRow = 4.0f;
+  float distbwLightCol = 4.0f;
+
+  float refX = refLight.mOffset.x;
+  float refY = refLight.mOffset.y;
+  float refZ = refLight.mOffset.z;
+
+  for (int i = 1; i < 9; i++)
+  {
+    float newX = refX - (distbwLightCol * (i / 3));
+    float newY = refY;
+    float newZ = refZ - (distbwLightRow * (i % 3));
+    
+    refLight.mOffset = glm::vec3(newX, newY, newZ);
+    meshes.push_back(refLight);
+  }
+}
 
 int main()
 {
@@ -717,6 +751,7 @@ int main()
   ObjectFilling(meshes);
 
   BenchPlacement(meshes);
+  LightPlacement(meshes);
 
   mainLoop(&gApp, meshes);
   cleanUp();
