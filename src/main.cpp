@@ -527,6 +527,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
   // LightPosition
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
   glm::vec3 lightPos = glm::vec3(-3.5f, 4.5f, -1.5f);
+  //glm::vec3 lightPos = glm::vec3(-3.5f, 1.0f, -1.5f);
   glUniform3f(location, lightPos.x, lightPos.y, lightPos.z);
 
 
@@ -608,8 +609,10 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
 
   podium.name = "Podium";
   podium.mScale = glm::vec3(0.14f, 0.14f, 0.11f);
-  podium.mOffset = glm::vec3(-2.34f, 1.26f, -1.7f);
+  podium.mOffset = glm::vec3(-2.34f, 0.0f, -1.7f);
+  podium.mRotate = 180.0f;
   podium.mModelPath = "Models/podium.obj";
+  podium.mTexturePath = "Models/textures/podium/podium_combined_texture_2.jpeg";
 
   table.name = "Table";
   table.mScale = glm::vec3(0.07f, 0.06f, 0.06f);
