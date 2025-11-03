@@ -50,7 +50,7 @@ struct App
   GLfloat mDeltaTime = 0;
   GLfloat mLastFrame = glfwGetTime();
 
-  int mIsPhong = 1;
+  int mIsPhong = 0;
 };
 
 
@@ -612,6 +612,8 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> door;
   Mesh3D<GLfloat> light;
   Mesh3D<GLfloat> board;
+  Mesh3D<GLfloat> tile;
+  Mesh3D<GLfloat> sideTile;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
@@ -652,11 +654,28 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   board.mModelPath = "Models/Board.obj";
   board.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
 
+  tile.name = "Tile";
+  tile.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
+  tile.mOffset = glm::vec3(0.0f, 0.0f, 0.0f);
+  tile.mRotate = 180.0f;
+  tile.mModelPath = "Models/tile.obj";
+  tile.mTexturePath = "Models/textures/tile/tile_texture_combined_1.jpeg";
+
+  sideTile.name = "Side-Tile";
+  sideTile.mScale = glm::vec3(0.078f, 0.078f, 0.078f);
+  sideTile.mOffset = glm::vec3(0.0f, 0.0f, 0.0f);
+  sideTile.mRotate = 180.0f;
+  sideTile.mModelPath = "Models/side_tile.obj";
+  sideTile.mTexturePath = "Models/textures/tile/tile_texture_combined_1.jpeg";
+
+
   meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
+  meshes.push_back(sideTile);
+  meshes.push_back(tile);
+  meshes.push_back(light);
   meshes.push_back(podium);
   meshes.push_back(table);
   meshes.push_back(door);
-  meshes.push_back(light);
   meshes.push_back(board);
 }
 
@@ -714,7 +733,7 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
 
 void LightPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
 {
-  Mesh3D<GLfloat> refLight = meshes[3]; // as the starting bench was erased
+  Mesh3D<GLfloat> refLight = meshes[1]; // as the starting bench was erased
 
   float distbwLightRow = 4.0f;
   float distbwLightCol = 4.0f;
@@ -731,6 +750,91 @@ void LightPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
     
     refLight.mOffset = glm::vec3(newX, newY, newZ);
     meshes.push_back(refLight);
+  }
+}
+
+void TilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+{
+  Mesh3D<GLfloat> refTile = meshes[0]; 
+
+  float distbwTileRow = 1.0f;
+  float distbwTileCol = 1.0f;
+
+  float refX = refTile.mOffset.x;
+  float refY = refTile.mOffset.y;
+  float refZ = refTile.mOffset.z;
+
+  for (int i = 1; i < 150; i++)
+  {
+    float newX = refX - (distbwTileCol * (i / 10));
+    float newY = refY;
+    float newZ = refZ - (distbwTileRow * (i % 10));
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    meshes.push_back(refTile);
+  }
+}
+
+void SideTilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+{
+  Mesh3D<GLfloat> refTile = meshes[0]; 
+  meshes.erase(meshes.begin());
+
+  float distbwTileRow = 1.0f;
+  float distbwTileCol = 1.0f;
+
+  float refX = refTile.mOffset.x;
+  float refY = refTile.mOffset.y;
+  float refZ = refTile.mOffset.z;
+  float refR = refTile.mRotate;
+
+  for (int i = 0; i < 10; i++)
+  {
+    if (i < 2)  continue; // door is there
+    float newX = refX;
+    float newY = refY;
+    float newZ = refZ - (distbwTileRow * (i % 10));
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    meshes.push_back(refTile);
+  }
+
+  for (int i = 0; i < 15; i++)
+  {
+    float newX = refX - (distbwTileCol * (i % 15));
+    float newY = refY;
+    float newZ = refZ - 0.005f;
+    float newR = refR +  90.0f;
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    refTile.mRotate = newR;
+    meshes.push_back(refTile);
+    
+  }
+
+  for (int i = 0; i < 15; i++)
+  {
+    float newX = (refX - (distbwTileCol * (i % 15))) - 1.005f;
+    float newY = refY;
+    float newZ = refZ - 10.0f;
+    float newR = refR -  90.0f;
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    refTile.mRotate = newR;
+    meshes.push_back(refTile);
+    
+  }
+
+  for (int i = 0; i < 10; i++)
+  {
+    float newX = refX - 15.0f;
+    float newY = refY;
+    float newZ = (refZ - (distbwTileRow * (i % 10))) - 1.005f;
+    float newR = refR -  180.0f;
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    refTile.mRotate = newR;
+    meshes.push_back(refTile);
   }
 }
 
@@ -751,7 +855,9 @@ int main()
   ObjectFilling(meshes);
 
   BenchPlacement(meshes);
+  SideTilePlacement(meshes);
   LightPlacement(meshes);
+  TilePlacement(meshes);
 
   mainLoop(&gApp, meshes);
   cleanUp();
