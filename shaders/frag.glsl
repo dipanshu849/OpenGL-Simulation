@@ -20,7 +20,7 @@ const float distBwLightCol = 4.0f;
 vec3 PhongShading() 
 {
   // ambient
-  float ambientStrength = 0.2;
+  float ambientStrength = 0.5;
   vec3 ambient = ambientStrength * u_lightColor;
 
   vec3 diffuse = vec3(0.0f);
@@ -38,7 +38,7 @@ vec3 PhongShading()
     new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
     
     // diffuse [point light]
-    float diffuseStrength = 0.2;
+    float diffuseStrength = 0.1;
     vec3 norm = normalize(o_normals);
     vec3 lightDir = normalize(new_lightPos - o_fragPos); // both in world space
     float diff = max(dot(norm, lightDir), 0.0);

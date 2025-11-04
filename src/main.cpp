@@ -614,6 +614,7 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> board;
   Mesh3D<GLfloat> tile;
   Mesh3D<GLfloat> sideTile;
+  Mesh3D<GLfloat> remote1;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
@@ -668,6 +669,13 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   sideTile.mModelPath = "Models/side_tile.obj";
   sideTile.mTexturePath = "Models/textures/tile/tile_texture_combined_1.jpeg";
 
+  remote1.name = "Remote 1";
+  remote1.mScale = glm::vec3(0.016f, 0.018f, 0.016f);
+  remote1.mOffset = glm::vec3(-3.82f, 2.2f, 0.005f);
+  remote1.mRotate = 180.0f;
+  remote1.mModelPath = "Models/remote_1.obj";
+  remote1.mTexturePath = "Models/textures/remote/remote_1_texture.jpeg";
+
 
   meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
   meshes.push_back(sideTile);
@@ -677,6 +685,7 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   meshes.push_back(table);
   meshes.push_back(door);
   meshes.push_back(board);
+  meshes.push_back(remote1);
 }
 
 
