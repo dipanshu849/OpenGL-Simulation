@@ -199,7 +199,7 @@ void initialization(App* app)
 
 void initializeGrid()
 {
-  glm::vec3 refCoordinate = glm::vec3(0.0f, 0.0f, 0.0f);
+  glm::vec3 refCoordinate = glm::vec3(0.0f, 4.93f, 0.0f);
 
   for (int i = 0; i < gGrid.mROW; i++)
   {
@@ -538,7 +538,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
 
   // LightPosition
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
-  glm::vec3 lightPos = glm::vec3(-3.5f, 6.5f, -1.5f);
+  glm::vec3 lightPos = glm::vec3(-3.5f, 4.93f, -1.5f);
   //glm::vec3 lightPos = glm::vec3(-3.5f, 1.0f, -1.5f);
   glUniform3f(location, lightPos.x, lightPos.y, lightPos.z);
 
@@ -615,6 +615,10 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   Mesh3D<GLfloat> tile;
   Mesh3D<GLfloat> sideTile;
   Mesh3D<GLfloat> remote1;
+  Mesh3D<GLfloat> winPanel1;
+  Mesh3D<GLfloat> winPanel2;
+  Mesh3D<GLfloat> winPanel3;
+  Mesh3D<GLfloat> winPanel4;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
@@ -644,7 +648,7 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
 
   light.name = "Light";
   light.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
-  light.mOffset = glm::vec3(-4.0f, 6.5f, -2.0f);
+  light.mOffset = glm::vec3(-4.0f, 4.93f, -2.0f);
   light.mModelPath = "Models/light.obj";
   light.mTexturePath = "Models/textures/light/texture.png";
 
@@ -676,6 +680,33 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   remote1.mModelPath = "Models/remote_1.obj";
   remote1.mTexturePath = "Models/textures/remote/remote_1_texture.jpeg";
 
+  winPanel1.name = "Window Panel 1";
+  winPanel1.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  winPanel1.mOffset = glm::vec3(0.15f, 4.2f, -8.2f);
+  winPanel1.mRotate = 270.0f;
+  winPanel1.mModelPath = "Models/window_panel_1.obj";
+  winPanel1.mTexturePath = "Models/textures/window/combined_texture_window_panel_1.jpeg";
+
+  winPanel2.name = "Window Panel 2";
+  winPanel2.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  winPanel2.mOffset = glm::vec3(-14.7f, 4.2f, -10.15f);
+  winPanel2.mRotate = 0.0f;
+  winPanel2.mModelPath = "Models/window_panel_2.obj";
+  winPanel2.mTexturePath = "Models/textures/window/combined_texture_window_panel_1.jpeg";
+
+  winPanel3.name = "Window Panel 3";
+  winPanel3.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  winPanel3.mOffset = glm::vec3(0.0f, 4.2f, 0.0f);
+  winPanel3.mRotate = 90.0f;
+  winPanel3.mModelPath = "Models/window_panel_3.obj";
+  winPanel3.mTexturePath = "Models/textures/window/combined_texture_window_panel_1.jpeg";
+
+  winPanel4.name = "Window Panel 4";
+  winPanel4.mScale = glm::vec3(0.069f, 0.06f, 0.06f);
+  winPanel4.mOffset = glm::vec3(0.15f, 4.2f, -10.15f);
+  winPanel4.mRotate = 270.0f;
+  winPanel4.mModelPath = "Models/window_panel_4.obj";
+  winPanel4.mTexturePath = "Models/textures/window/combined_texture_window_panel_1.jpeg";
 
   meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
   meshes.push_back(sideTile);
@@ -686,6 +717,10 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
   meshes.push_back(door);
   meshes.push_back(board);
   meshes.push_back(remote1);
+  meshes.push_back(winPanel1);
+  meshes.push_back(winPanel2);
+  meshes.push_back(winPanel3);
+  meshes.push_back(winPanel4);
 }
 
 
