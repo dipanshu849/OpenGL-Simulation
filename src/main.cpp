@@ -280,16 +280,9 @@ bool loadTexture(const char* path, Mesh3D<T> *mesh)
   int width, height, nChannels;
   unsigned char* data = stbi_load(path, &width, &height, &nChannels, 0);
   
-  if(stbi_failure_reason())
-  {
-    std::cout << stbi_failure_reason() << std::endl;
-  }
-  
+
   if (data)
   {
-     // std::cout << "Width of texture: " << width << std::endl;
-     // std::cout << "Height of texture: " << height << std::endl;
-
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
   }
