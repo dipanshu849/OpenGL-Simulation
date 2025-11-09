@@ -4,10 +4,11 @@ layout(location=0) in vec3 i_position;
 layout(location=1) in vec2 i_texCoordinates;
 layout(location=2) in vec3 i_normals;
 
-out vec3 o_fragPos;
-out vec3 o_normals;
-out vec2 o_uv;
-out vec3 o_gouraudShadingResult;
+layout(location=0) out vec3 o_fragPos;
+layout(location=1) out vec3 o_normals;
+layout(location=2) out vec2 o_uv;
+layout(location=3) out vec3 o_gouraudShadingResult;
+// layout(location=4) out vec4 o_shadowCoordinate;
 
 uniform mat4 u_model; // Local to world
 uniform mat4 u_view;
@@ -59,5 +60,6 @@ void main() {
     o_gouraudShadingResult = GouraudShading(o_fragPos, o_normals);
   }
 
+  // o_shadowCoordinate = u_lightProjection * u_lightView * vec4(o_fragPos, 1.0);
   gl_Position = u_projection * u_view * vec4(o_fragPos, 1.0);
 }

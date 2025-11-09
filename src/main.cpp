@@ -30,69 +30,13 @@
 #include <cstring>
 
 // My libraries
+#include "app.hpp"
+#include "mesh.hpp"
 #include "camera.hpp"
 #include "loadModel.hpp"
-
-
-struct App
-{
-  int mScreenWidth = 1080;
-  int mScreenHeight = 720;
-  
-  const char* mTitle = "CL-3";
-
-  GLFWwindow * mWindow = nullptr;
-  GLuint mGraphicsPipelineShaderProgram = 0;
-
-  Camera mCamera;
-  GLfloat mCameraSpeed = 10.0f;
-
-  GLfloat mDeltaTime = 0;
-  GLfloat mLastFrame = glfwGetTime();
-
-  int mIsPhong = 0;
-};
-
-
-template <typename T>
-struct Mesh3D
-{
-  GLuint mVertexArrayObject = 0;
-
-  GLuint mPositionVertexBufferObject = 0;
-  GLuint mUvVertexBufferObject = 0;
-  GLuint mNormalVertexBufferObject = 0;
-
-  GLuint mTextureObject = 0;
-  
-  // we can use glfoat or glm::vec3 direct
-  std::vector<T> mVertexData; 
-  std::vector<T> mUvData; // T can cause problem here
-  std::vector<T> mNormalData;
-
-  glm::vec3 mOffset = glm::vec3(0.0f);
-  GLfloat mRotate = 0.0f;
-  glm::vec3 mScale = glm::vec3(0.0f);
-
-  const char* name = "";
-  const char* mModelPath = "";
-  const char* mTexturePath = "";
-};
-
-
-struct Grid
-{
-  GLuint mVertexArrayObject = 0; 
-  GLuint mVertexBufferObjectH = 0;
-  GLuint mVertexBufferObjectV = 0;
-
-  std::vector<glm::vec3> mVertexDataH;
-  std::vector<glm::vec3> mVertexDataV;
-
-  int mROW = 11;
-  int mCOL = 16;
-  float mTileSize = 1.0f;
-};
+#include "shader.hpp"
+#include "shadowMap.hpp"
+#include "light.hpp"
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GLOBALS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -100,28 +44,6 @@ App gApp;
 Grid gGrid;
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ GLOBALS END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~ ERROR HANDLING ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-static void GLClearAllErrors()
-{
-  while(glGetError() != GL_NO_ERROR);
-}
-
-
-static bool GLCheckErrorStatus(const char* function, int line)
-{
-  while(GLenum error = glGetError())
-  {
-    std::cout << "OpenGL Error: " << error
-              << "\tLine: " << line
-              << "\tfunction: " << function << std::endl;
-    return true;
-  }
-  return false;
-}
-
-#define GLCheck(x) GLClearAllErrors(); x; GLCheckErrorStatus(#x, __LINE__);
-// ~~~~~~~~~~~~~~~~~~~~~~~~~ ERROR HANDLING END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) 
@@ -242,8 +164,7 @@ void initializeGrid()
 
 
 // Load object
-template <typename T>
-bool meshCreate(const char* path, Mesh3D<T> *mesh)
+bool meshCreate(const char* path, Mesh3D* mesh)
 {
   std::vector<float> vertexData;
   std::vector<float> uvData;
@@ -264,8 +185,7 @@ bool meshCreate(const char* path, Mesh3D<T> *mesh)
 
 
 // Load texture
-template <typename T>
-bool loadTexture(const char* path, Mesh3D<T> *mesh)
+bool loadTexture(const char* path, Mesh3D* mesh)
 {
   glGenTextures(1, &mesh->mTextureObject);
   glBindTexture(GL_TEXTURE_2D, mesh->mTextureObject);
@@ -288,7 +208,7 @@ bool loadTexture(const char* path, Mesh3D<T> *mesh)
   }
   else
   {
-    std::cout << "Failed to load texture" << std::endl;
+    std::cout << "Failed to load texture, for mesh: " << mesh->name << std::endl;
     return false;
   }
 
@@ -300,8 +220,7 @@ bool loadTexture(const char* path, Mesh3D<T> *mesh)
 
 
 // Sets up mesh data transfer from CPU to GPU 
-template <typename T>
-void meshCTGdataTransfer(Mesh3D<T>* mesh) 
+void meshCTGdataTransfer(Mesh3D* mesh) 
 {
   glGenVertexArrays(1, &mesh->mVertexArrayObject);
   glBindVertexArray(mesh->mVertexArrayObject);
@@ -310,7 +229,7 @@ void meshCTGdataTransfer(Mesh3D<T>* mesh)
   glGenBuffers(1, &mesh->mPositionVertexBufferObject);
   glBindBuffer(GL_ARRAY_BUFFER, mesh->mPositionVertexBufferObject);
   glBufferData(GL_ARRAY_BUFFER,
-              mesh->mVertexData.size() * sizeof(T),
+              mesh->mVertexData.size() * sizeof(float),
               mesh->mVertexData.data(),
               GL_STATIC_DRAW);
 
@@ -328,7 +247,7 @@ void meshCTGdataTransfer(Mesh3D<T>* mesh)
   glGenBuffers(1, &mesh->mUvVertexBufferObject);
   glBindBuffer(GL_ARRAY_BUFFER, mesh->mUvVertexBufferObject);
   glBufferData(GL_ARRAY_BUFFER,
-              mesh->mUvData.size() * sizeof(T),
+              mesh->mUvData.size() * sizeof(float),
               mesh->mUvData.data(),
               GL_STATIC_DRAW);
 
@@ -345,7 +264,7 @@ void meshCTGdataTransfer(Mesh3D<T>* mesh)
   glGenBuffers(1, &mesh->mNormalVertexBufferObject);
   glBindBuffer(GL_ARRAY_BUFFER, mesh->mNormalVertexBufferObject);
   glBufferData(GL_ARRAY_BUFFER,
-              mesh->mNormalData.size() * sizeof(T),
+              mesh->mNormalData.size() * sizeof(float),
               mesh->mNormalData.data(),
               GL_STATIC_DRAW);
 
@@ -362,80 +281,6 @@ void meshCTGdataTransfer(Mesh3D<T>* mesh)
   glDisableVertexAttribArray(1);
   glDisableVertexAttribArray(2);
 }
-
-
-// ~~~~~~~~~~~~~~~~~~ Graphics Pipline Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-GLuint CompileShader(GLuint type, const std::string& source) 
-{
-    GLuint shaderObject;
-
-    if (type == GL_VERTEX_SHADER) {
-        shaderObject = glCreateShader(GL_VERTEX_SHADER);
-    } else if (type == GL_FRAGMENT_SHADER) {
-        shaderObject = glCreateShader(GL_FRAGMENT_SHADER);
-    }
-
-    const char* src = source.c_str();
-    glShaderSource(shaderObject, 1, &src, nullptr);
-    glCompileShader(shaderObject);
-
-    return shaderObject;
-}
-
-GLuint createShaderProgram(const std::string& vertexShaderSource, const std::string& fragmentShaderSource) 
-{
-    GLuint programObject = glCreateProgram();
-
-    GLuint myVertexShader   = CompileShader(GL_VERTEX_SHADER, vertexShaderSource);
-    GLuint myFragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-    // error checking for fragment shader
-    int success;
-    char infoLog[512];
-    glGetShaderiv(myFragmentShader, GL_COMPILE_STATUS, &success);
-
-    if (!success)
-    {
-        glGetShaderInfoLog(myFragmentShader, 512, NULL, infoLog);
-        std::cout << "Compilation of frag failed\n" << infoLog << std::endl;
-    }
-    //
-
-    glAttachShader(programObject, myVertexShader);
-    glAttachShader(programObject, myFragmentShader);
-    glLinkProgram(programObject);
-
-    glValidateProgram(programObject);
-    return programObject;
-}
-
-
-// Converts GLSL files to strings
-std::string loadShaderAsString(const std::string& filename) {
-    std::string result = "";
-
-    std::string line = "";
-    std::ifstream myFile(filename.c_str());
-
-    if (myFile.is_open()) {
-        while (std::getline(myFile, line)) {
-            result += line + '\n';
-        }
-        myFile.close();
-    }
-
-    return result;
-}
-
-
-void createGraphicsPipeline(App* app) 
-{
-    std::string vertexShaderSource = loadShaderAsString("./shaders/vert.glsl");
-    std::string fragmentShaderSource = loadShaderAsString("./shaders/frag.glsl");
-
-    app->mGraphicsPipelineShaderProgram = createShaderProgram(vertexShaderSource, fragmentShaderSource);
-}
-// ~~~~~~~~~~~~~~~~~~ Graphics Pipline Setup END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 void Input(App* app)
@@ -507,8 +352,20 @@ void DisplayGrid(App* app)
 }
 
 
-template <typename T>
-void MeshTransformation(App* app, Mesh3D<T>* mesh)
+void LightInformation(App* app)
+{
+  // LightPosition
+  GLint location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
+  glUniform3f(location, app->mRefLightPos.x, app->mRefLightPos.y, app->mRefLightPos.z);
+
+
+  // LightColor
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightColor");
+  glUniform3f(location, app->mLightColor.x, app->mLightColor.y, app->mLightColor.z);
+}
+
+
+void MeshTransformation(App* app, Mesh3D* mesh)
 {
   // Local to world
   GLint location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_model");
@@ -516,6 +373,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
   model = glm::rotate(model, glm::radians(mesh->mRotate), glm::vec3(0.0f, 1.0f, 0.0f));
   model = glm::scale(model, mesh->mScale);
   glUniformMatrix4fv(location, 1, GL_FALSE, &model[0][0]);
+
 
   // World to camera
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_view");
@@ -529,22 +387,11 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
   glUniformMatrix4fv(location, 1, GL_FALSE, &projection[0][0]);
 
 
-  // LightPosition
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
-  glm::vec3 lightPos = glm::vec3(-3.5f, 4.93f, -1.5f);
-  //glm::vec3 lightPos = glm::vec3(-3.5f, 1.0f, -1.5f);
-  glUniform3f(location, lightPos.x, lightPos.y, lightPos.z);
-
-
-  // LightColor
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightColor");
-  glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
-  glUniform3f(location, lightColor.x, lightColor.y, lightColor.z);
-
   // ViewPosition
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_viewPos");
   glm::vec3 viewPos = app->mCamera.getViewPos();
   glUniform3f(location, viewPos.x, viewPos.y, viewPos.z);
+
 
   // toggleShading
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_isPhong");
@@ -552,8 +399,7 @@ void MeshTransformation(App* app, Mesh3D<T>* mesh)
 }
 
 
-template <typename T>
-void Draw(Mesh3D<T>* mesh) 
+void Draw(Mesh3D* mesh) 
 {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, mesh->mTextureObject);
@@ -562,21 +408,22 @@ void Draw(Mesh3D<T>* mesh)
 }
 
 
-template <typename T>
-void mainLoop(App* app, std::vector<Mesh3D<T>> meshes) 
+void mainLoop(App* app, std::vector<Mesh3D> meshes) 
 {
   while (!glfwWindowShouldClose(app->mWindow))
   {
+    // get fps
     float currentTime = glfwGetTime();
     app->mDeltaTime = currentTime - app->mLastFrame;
     app->mLastFrame = currentTime;
   
+    LightInformation(app);
     Input(app);
+
     PreDraw(app);
 
     DisplayGrid(app);
-
-    for (Mesh3D<T> mesh : meshes)
+    for (Mesh3D mesh : meshes)
     {
       MeshTransformation(app, &mesh);
       Draw(&mesh);
@@ -597,21 +444,21 @@ void cleanUp()
 
 
 
-void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
+void ObjectCreation(std::vector<Mesh3D>& meshes)
 {
-  Mesh3D<GLfloat> bench;
-  Mesh3D<GLfloat> podium;
-  Mesh3D<GLfloat> table;
-  Mesh3D<GLfloat> door;
-  Mesh3D<GLfloat> light;
-  Mesh3D<GLfloat> board;
-  Mesh3D<GLfloat> tile;
-  Mesh3D<GLfloat> sideTile;
-  Mesh3D<GLfloat> remote1;
-  Mesh3D<GLfloat> winPanel1;
-  Mesh3D<GLfloat> winPanel2;
-  Mesh3D<GLfloat> winPanel3;
-  Mesh3D<GLfloat> winPanel4;
+  Mesh3D bench;
+  Mesh3D podium;
+  Mesh3D table;
+  Mesh3D door;
+  Mesh3D light;
+  Mesh3D board;
+  Mesh3D tile;
+  Mesh3D sideTile;
+  Mesh3D remote1;
+  Mesh3D winPanel1;
+  Mesh3D winPanel2;
+  Mesh3D winPanel3;
+  Mesh3D winPanel4;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
@@ -717,9 +564,9 @@ void ObjectCreation(std::vector<Mesh3D<GLfloat>>& meshes)
 }
 
 
-void ObjectFilling(std::vector<Mesh3D<GLfloat>>& meshes)
+void ObjectFilling(std::vector<Mesh3D>& meshes)
 {
-  for (Mesh3D<GLfloat>& mesh : meshes) {
+  for (Mesh3D& mesh : meshes) {
     if(!meshCreate(mesh.mModelPath, &mesh))       // Loading position, UV, normals for vertices
     {
       std::cout << "Failed to load model for " << mesh.name << std::endl;
@@ -739,9 +586,9 @@ void ObjectFilling(std::vector<Mesh3D<GLfloat>>& meshes)
 }
 
 
-void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+void BenchPlacement(std::vector<Mesh3D>& meshes)
 {
-  Mesh3D<GLfloat> refBench = meshes[0];
+  Mesh3D refBench = meshes[0];
   meshes.erase(meshes.begin());
 
   float distbwBenchRow = 1.5f;
@@ -768,9 +615,9 @@ void BenchPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
 }
 
 
-void LightPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+void LightPlacement(std::vector<Mesh3D>& meshes)
 {
-  Mesh3D<GLfloat> refLight = meshes[1]; // as the starting bench was erased
+  Mesh3D refLight = meshes[1]; // as the starting bench was erased
 
   float distbwLightRow = 4.0f;
   float distbwLightCol = 4.0f;
@@ -790,9 +637,9 @@ void LightPlacement(std::vector<Mesh3D<GLfloat>>& meshes)
   }
 }
 
-void TilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+void TilePlacement(std::vector<Mesh3D>& meshes)
 {
-  Mesh3D<GLfloat> refTile = meshes[0]; 
+  Mesh3D refTile = meshes[0]; 
 
   float distbwTileRow = 1.0f;
   float distbwTileCol = 1.0f;
@@ -812,9 +659,9 @@ void TilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
   }
 }
 
-void SideTilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
+void SideTilePlacement(std::vector<Mesh3D>& meshes)
 {
-  Mesh3D<GLfloat> refTile = meshes[0]; 
+  Mesh3D refTile = meshes[0]; 
   meshes.erase(meshes.begin());
 
   float distbwTileRow = 1.0f;
@@ -878,16 +725,12 @@ void SideTilePlacement(std::vector<Mesh3D<GLfloat>>& meshes)
 int main()
 {
   initialization(&gApp);
-  createGraphicsPipeline(&gApp);
-
-  // ~~~~~~~~~~~~ HELPER 
-  
   initializeGrid();
 
-  // HELPER END ~~~~~~~~
+  Shader shader;
+  gApp.mGraphicsPipelineShaderProgram =  shader.mCreateGraphicsPipeline("shaders/vert.glsl", "shaders/frag.glsl");
 
-
-  std::vector<Mesh3D<GLfloat>> meshes;
+  std::vector<Mesh3D> meshes;
   ObjectCreation(meshes);
   ObjectFilling(meshes);
 
@@ -895,6 +738,18 @@ int main()
   SideTilePlacement(meshes);
   LightPlacement(meshes);
   TilePlacement(meshes);
+
+  // Lights
+  glm::vec3 tempLightPos;
+  for (int i = 0; i < gApp.mLightsNumber; i++)
+  {
+    tempLightPos.x = gApp.mRefLightPos.x - (gApp.mDistBwLightCol * (i / 3));
+    tempLightPos.y = gApp.mRefLightPos.y;
+    tempLightPos.z = gApp.mRefLightPos.z - (gApp.mDistBwLightRow * (i % 3));
+
+    gApp.mLights[i].mPosition = tempLightPos;
+    gApp.mLights[i].mGenShadowMap(meshes);
+  }
 
   mainLoop(&gApp, meshes);
   cleanUp();
