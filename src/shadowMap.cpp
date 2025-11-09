@@ -36,8 +36,10 @@ void ShadowMap::CreateShadowMapTextureObject()
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 }
 
 
@@ -53,12 +55,12 @@ void ShadowMap::BindShadowMapFrameBufferTextureObject()
 void ShadowMap::GenShadowMap(std::vector<Mesh3D> meshes, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix)
 {
   glEnable(GL_DEPTH_TEST);  
-  glEnable(GL_CULL_FACE);
+  glCullFace(GL_FRONT);
 
   glViewport(0, 0, mShadowMapWidth, mShadowMapHeight);
   glBindFramebuffer(GL_FRAMEBUFFER, mFrameBufferObject);
   glClear(GL_DEPTH_BUFFER_BIT);
-  
+
   glUseProgram(mGraphicsPipelineShaderProgram);
 
   ShadowMap::RenderOnFrameBuffer(meshes, lightViewMatrix, lightProjectionMatrix);

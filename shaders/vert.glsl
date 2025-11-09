@@ -1,4 +1,4 @@
-#version 410 core
+#version 430 core
 
 layout(location=0) in vec3 i_position;
 layout(location=1) in vec2 i_texCoordinates;
@@ -8,15 +8,20 @@ layout(location=0) out vec3 o_fragPos;
 layout(location=1) out vec3 o_normals;
 layout(location=2) out vec2 o_uv;
 layout(location=3) out vec3 o_gouraudShadingResult;
-// layout(location=4) out vec4 o_shadowCoordinate;
+layout(location=4) out vec4 o_fragPosLightSpace[9];
 
 uniform mat4 u_model; // Local to world
 uniform mat4 u_view;
 uniform mat4 u_projection;
+
 uniform vec3 u_lightPos;
 uniform vec3 u_lightColor;
+uniform mat4 u_lightProjectionViewMatrix[9];
+
 uniform vec3 u_viewPos;
 uniform int u_isPhong;
+
+
 
 vec3 GouraudShading(vec3 o_fragPos, vec3 o_normals)
 {
@@ -50,7 +55,7 @@ void main() {
   // Similarly to get coord of world space for normals, but
   // the problem with normal scaling, when scaling in model
   // matrix is not uniform, the normals are no longer normals
-  o_normals = mat3(transpose(inverse(u_model))) * i_normals;
+  o_normals = normalize(mat3(transpose(inverse(u_model))) * i_normals);
 
   o_uv = i_texCoordinates;
   
@@ -60,6 +65,10 @@ void main() {
     o_gouraudShadingResult = GouraudShading(o_fragPos, o_normals);
   }
 
-  // o_shadowCoordinate = u_lightProjection * u_lightView * vec4(o_fragPos, 1.0);
+  for (int i = 0; i < 9; i++)
+  {
+    o_fragPosLightSpace[i] = u_lightProjectionViewMatrix[i] * vec4(o_fragPos, 1.0);
+  }
+
   gl_Position = u_projection * u_view * vec4(o_fragPos, 1.0);
 }

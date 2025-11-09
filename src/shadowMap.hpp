@@ -12,16 +12,16 @@ class ShadowMap
 {
   private:
     GLuint mFrameBufferObject = 0;
-    GLuint mTextureObject = 0;
     GLuint mGraphicsPipelineShaderProgram = 0;
 
     void RenderOnFrameBuffer(std::vector<Mesh3D> meshes, glm::mat4, glm::mat4);
     void TransformObjects_N_SendUniformData(Mesh3D*, glm::mat4, glm::mat4);
  
  public:
-   float mShadowMapWidth = 2048.0f;
-   float mShadowMapHeight = 2048.0f;
+   float mShadowMapWidth = 4096.0f;
+   float mShadowMapHeight = 4096.0f;
    glm::vec3 mLightPos;
+   GLuint mTextureObject = 0;
    void SetLightPosition(glm::vec3);
    void SetGraphicsPipeline(GLuint);
    void CreateShadowMapFrameBufferObject();

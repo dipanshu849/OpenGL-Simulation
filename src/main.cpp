@@ -17,6 +17,7 @@
 #include <GLFW/glfw3.h>
 #include "../glm/ext/matrix_transform.hpp"
 #include "../glm/ext/matrix_clip_space.hpp"
+#include "../glm/gtc/type_ptr.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "../glm/gtx/string_cast.hpp"
 #define STB_IMAGE_IMPLEMENTATION
@@ -289,20 +290,6 @@ void Input(App* app)
     glfwSetWindowShouldClose(app->mWindow, true);
 }
 
-
-void PreDraw(App* app) 
-{
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_CULL_FACE);
-
-  glViewport(0, 0, app->mScreenWidth, app->mScreenHeight);
-  glClearColor(1.f, 0.f, 0.f, 1.f);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-
-  glUseProgram(app->mGraphicsPipelineShaderProgram);
-}
-
-
 void DisplayGrid(App* app)
 {
   // Local to world
@@ -358,11 +345,60 @@ void LightInformation(App* app)
   GLint location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
   glUniform3f(location, app->mRefLightPos.x, app->mRefLightPos.y, app->mRefLightPos.z);
 
-
   // LightColor
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightColor");
   glUniform3f(location, app->mLightColor.x, app->mLightColor.y, app->mLightColor.z);
+
+
+  // projection view matrix of light 
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightProjectionViewMatrix[0]");
+  glUniformMatrix4fv(location, 9, GL_FALSE, glm::value_ptr(app->mLightProjectionViewMatrixCombined[0]));
+
+
+  // attenuation constants
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAttenLinear");
+  glUniform1f(location, app->mLights[0].attenuationLinear);
+  
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAttenQuad");
+  glUniform1f(location, app->mLights[0].attenuationQuad);
+
+  // traget direction
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightTargetDirection");
+  glUniform3f(location, app->mLights[0].mTargetDirection.x, app->mLights[0].mTargetDirection.y, app->mLights[0].mTargetDirection.z);
+
+
+  // cone angle direction
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightInnerCutOffAngle");
+  glUniform1f(location, app->mLights[0].mInnerCutOffAngle);
+
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightOuterCutOffAngle");
+  glUniform1f(location, app->mLights[0].mOuterCutOffAngle);
+  
+  // type strength [ambient, specular, diffuse]
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAmbientStrength");
+  glUniform1f(location, app->mLights[0].mAmbientStrength);
+
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightDiffuseStrength");
+  glUniform1f(location, app->mLights[0].mDiffuseStrength);
+
+  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightSpecularStrength");
+  glUniform1f(location, app->mLights[0].mSpecularStrength);
 }
+
+
+void PreDraw(App* app) 
+{
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+
+  glViewport(0, 0, app->mScreenWidth, app->mScreenHeight);
+  glClearColor(1.f, 0.f, 0.f, 1.f);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
+
+  glUseProgram(app->mGraphicsPipelineShaderProgram);
+}
+
 
 
 void MeshTransformation(App* app, Mesh3D* mesh)
@@ -396,12 +432,20 @@ void MeshTransformation(App* app, Mesh3D* mesh)
   // toggleShading
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_isPhong");
   glUniform1i(location, app->mIsPhong);
+
+
 }
 
 
-void Draw(Mesh3D* mesh) 
+void Draw(Mesh3D* mesh, App* app) 
 {
-  glActiveTexture(GL_TEXTURE0);
+  for (int i = 0; i < app->mLightsNumber; i++)
+  {
+    glActiveTexture(GL_TEXTURE0 + i);
+    glBindTexture(GL_TEXTURE_2D, app->mLights[i].mShadowMap.mTextureObject);    
+  }
+
+  glActiveTexture(GL_TEXTURE0 + app->mLightsNumber);
   glBindTexture(GL_TEXTURE_2D, mesh->mTextureObject);
   glBindVertexArray(mesh->mVertexArrayObject);
   glDrawArrays(GL_TRIANGLES, 0, mesh->mVertexData.size() / 3);
@@ -410,6 +454,7 @@ void Draw(Mesh3D* mesh)
 
 void mainLoop(App* app, std::vector<Mesh3D> meshes) 
 {
+
   while (!glfwWindowShouldClose(app->mWindow))
   {
     // get fps
@@ -417,16 +462,17 @@ void mainLoop(App* app, std::vector<Mesh3D> meshes)
     app->mDeltaTime = currentTime - app->mLastFrame;
     app->mLastFrame = currentTime;
   
-    LightInformation(app);
+
     Input(app);
 
     PreDraw(app);
 
+    LightInformation(app);
     DisplayGrid(app);
     for (Mesh3D mesh : meshes)
     {
       MeshTransformation(app, &mesh);
-      Draw(&mesh);
+      Draw(&mesh, app);
     }
 
     // Update the screen
@@ -462,7 +508,7 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
-  bench.mOffset = glm::vec3(-0.6f, 0.1f, -2.6f);
+  bench.mOffset = glm::vec3(-0.6f, 0.128f, -2.6f);
   bench.mModelPath = "Models/BenchTextured.obj";
   bench.mTexturePath = "Models/textures/combinedBenchTexture.png";
 
@@ -749,6 +795,7 @@ int main()
 
     gApp.mLights[i].mPosition = tempLightPos;
     gApp.mLights[i].mGenShadowMap(meshes);
+    gApp.mLightProjectionViewMatrixCombined[i] = gApp.mLights[i].mGetProjectionMatrix() * gApp.mLights[i].mGetViewMatrix();
   }
 
   mainLoop(&gApp, meshes);

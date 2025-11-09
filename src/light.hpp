@@ -27,6 +27,7 @@ class Light
     glm::vec3 mUpDirection;
 
     float mInnerCutOffAngle;
+    float mOuterCutOffAngle;
     float mInnerCutOffCosine;
     float mOuterCutOffCosine;
 
