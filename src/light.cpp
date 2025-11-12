@@ -11,13 +11,13 @@ Light::Light()
 
   mAmbientStrength = 0.6;
   mDiffuseStrength = 1.0;
-  mSpecularStrength = 1.0; 
+  mSpecularStrength = 0.7; 
 
   mTargetDirection = glm::vec3(0.0f, -1.0f, 0.0f);
   mUpDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
-  mInnerCutOffAngle = 35.0f;
-  mOuterCutOffAngle = 45.0f;
+  mInnerCutOffAngle = 50.0f;
+  mOuterCutOffAngle = 60.0f;
   mInnerCutOffCosine = cos(glm::radians(mInnerCutOffAngle));
   mOuterCutOffCosine = cos(glm::radians(mOuterCutOffAngle));
 }

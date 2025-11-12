@@ -33,7 +33,7 @@ float innerCutOff = cos(radians(u_lightInnerCutOffAngle));
 float outerCutOff = cos(radians(u_lightOuterCutOffAngle));
 
 
-float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap)
+float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap, vec3 lightDir)
 {
   if (shadowCoordinate.x < 0.0 || shadowCoordinate.x > 1.0 ||
       shadowCoordinate.y < 0.0 || shadowCoordinate.y > 1.0 ||
@@ -48,7 +48,7 @@ float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap)
   float depth = texture(shadowMap, shadowCoordinate.xy).r;
   float currentDepth = shadowCoordinate.z;
 
-  if (currentDepth > depth + 0.00008) // saves from shadow acne
+  if (currentDepth > depth + 0.0001) // saves from shadow acne
   {
     return 0.0; // it is in shadow
   }
@@ -72,18 +72,20 @@ vec3 PhongShading()
 
   for (int i = 0; i < numLights; i++)
   {
+    new_lightPos.x = refX -  (distBwLightCol * (i / 3));
+    new_lightPos.y = refY;
+    new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
+
+    // spot light [inner and outcone]
+    vec3 lightDir = normalize(new_lightPos - i_fragPos); // both in world space
+
     vec3 shadowCoordinate = (i_fragPosLightSpace[i].xyz / i_fragPosLightSpace[i].w) * 0.5 + 0.5;
 
-    float lightIntensity = calculateLightIntensity(shadowCoordinate, u_ShadowMaps[i]); 
+    float lightIntensity = calculateLightIntensity(shadowCoordinate, u_ShadowMaps[i], lightDir); 
 
     if (lightIntensity == 1.0f)
     {
-      new_lightPos.x = refX -  (distBwLightCol * (i / 3));
-      new_lightPos.y = refY;
-      new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
 
-      // spot light [inner and outcone]
-      vec3 lightDir = normalize(new_lightPos - i_fragPos); // both in world space
       float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
       float epsilon = innerCutOff - outerCutOff;
       float intensity = clamp((theta - outerCutOff) / epsilon, 0.0, 1.0);
@@ -101,12 +103,35 @@ vec3 PhongShading()
       // specular 
       vec3 viewDir = normalize(u_viewPos - i_fragPos);
       vec3 reflectDir = reflect(-lightDir, norm);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
       specular += u_lightSpecularStrength * spec * u_lightColor * attenuation * intensity;
     }
 
   }
+  // the extra light
+      new_lightPos = vec3(-7.5, 4.90, 5.5);
 
+      vec3 lightDir = normalize(new_lightPos - i_fragPos); // both in world space
+      float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
+
+      if (theta > cos(radians(45.0)))
+      {
+        // do nothing
+      } 
+      else 
+      {
+        // diffuse 
+        vec3 norm = normalize(i_normals);
+        float diff = max(dot(norm, lightDir), 0.0);
+        diffuse += (cos(radians(45.0)) - theta) *  0.4 * u_lightDiffuseStrength * diff * u_lightColor;
+
+      // specular 
+      vec3 viewDir = normalize(u_viewPos - i_fragPos);
+      vec3 reflectDir = reflect(-lightDir, norm);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
+      specular += (cos(radians(45.0)) - theta) *  0.4 * u_lightSpecularStrength * spec * u_lightColor;
+      }
+  ///
   vec3 result = (ambient + diffuse + specular);
   return result;
 }
