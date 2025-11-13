@@ -10,7 +10,7 @@ Light::Light()
   attenuationQuad = 0.07f;
 
   mAmbientStrength = 0.6;
-  mDiffuseStrength = 1.0;
+  mDiffuseStrength = 0.7;
   mSpecularStrength = 0.7; 
 
   mTargetDirection = glm::vec3(0.0f, -1.0f, 0.0f);

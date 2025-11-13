@@ -125,11 +125,11 @@ vec3 PhongShading()
         float diff = max(dot(norm, lightDir), 0.0);
         diffuse += (cos(radians(45.0)) - theta) *  0.4 * u_lightDiffuseStrength * diff * u_lightColor;
 
-      // specular 
-      vec3 viewDir = normalize(u_viewPos - i_fragPos);
-      vec3 reflectDir = reflect(-lightDir, norm);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
-      specular += (cos(radians(45.0)) - theta) *  0.4 * u_lightSpecularStrength * spec * u_lightColor;
+        // specular 
+        vec3 viewDir = normalize(u_viewPos - i_fragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 2.0);
+        specular += (cos(radians(45.0)) - theta) * 0.3 * u_lightSpecularStrength * spec * u_lightColor;
       }
   ///
   vec3 result = (ambient + diffuse + specular);

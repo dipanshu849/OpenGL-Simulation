@@ -505,11 +505,13 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   Mesh3D winPanel3;
   Mesh3D winPanel4;
   Mesh3D doorFrame;
+  Mesh3D projectorScreen;
+  Mesh3D wallFront;
 
   bench.name = "Bench";
-  bench.mScale = glm::vec3(0.076f, 0.07f, 0.057f);
-  bench.mOffset = glm::vec3(-0.6f, 0.128f, -2.6f);
-  bench.mModelPath = "Models/BenchTextured.obj";
+  bench.mScale = glm::vec3(0.077f, 0.07f, 0.06f);
+  bench.mOffset = glm::vec3(-0.008f, 0.0f, -2.2f);
+  bench.mModelPath = "Models/bench_1.obj";
   bench.mTexturePath = "Models/textures/combinedBenchTexture.png";
 
   podium.name = "Podium";
@@ -533,8 +535,8 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   door.mTexturePath = "Models/textures/door/combined_texture.jpeg";
 
   doorFrame.name = "Door-Frame";
-  doorFrame.mScale = glm::vec3(0.07f, 0.07f, 0.06f);
-  doorFrame.mOffset = glm::vec3(0.05f, 0.0f, -1.93f);
+  doorFrame.mScale = glm::vec3(0.068f, 0.07f, 0.05f);
+  doorFrame.mOffset = glm::vec3(0.05f, 0.0f, -1.87f);
   doorFrame.mRotate = 270.0f;
   doorFrame.mModelPath = "Models/door_frame.obj";
   doorFrame.mTexturePath = "Models/textures/door_frame/combined_texture_door_frame_2.jpeg";
@@ -552,6 +554,21 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   board.mModelPath = "Models/board_shaded.obj";
   board.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
 
+  projectorScreen.name = "Projector-Screen";
+  projectorScreen.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
+  projectorScreen.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
+  projectorScreen.mRotate = 180.0f;
+  projectorScreen.mModelPath = "Models/projector_screen_1.obj";
+  projectorScreen.mTexturePath = "Models/textures/projector_screen/combined_projector_screen_texture.jpeg";
+
+  wallFront.name = "Front-Wall";
+  wallFront.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
+  wallFront.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
+  wallFront.mRotate = 180.0f;
+  wallFront.mModelPath = "Models/wall_front.obj";
+  // wallFront.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
+
+
   tile.name = "Tile";
   tile.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
   tile.mOffset = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -568,13 +585,13 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
 
   remote1.name = "Remote 1";
   remote1.mScale = glm::vec3(0.016f, 0.018f, 0.016f);
-  remote1.mOffset = glm::vec3(-3.82f, 2.2f, 0.005f);
+  remote1.mOffset = glm::vec3(-3.86f, 2.27f, 0.005f);
   remote1.mRotate = 180.0f;
   remote1.mModelPath = "Models/remote_1_shaded.obj";
   remote1.mTexturePath = "Models/textures/remote/remote_1_texture.jpeg";
 
   winPanel1.name = "Window Panel 1";
-  winPanel1.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
+  winPanel1.mScale = glm::vec3(0.066f, 0.06f, 0.06f);
   winPanel1.mOffset = glm::vec3(0.15f, 4.2f, -8.2f);
   winPanel1.mRotate = 270.0f;
   winPanel1.mModelPath = "Models/window_panel_1_shaded.obj";
@@ -585,21 +602,21 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   winPanel2.mOffset = glm::vec3(-14.7f, 4.2f, -10.15f);
   winPanel2.mRotate = 0.0f;
   winPanel2.mModelPath = "Models/window_panel_2.obj";
-  winPanel2.mTexturePath = "Models/textures/window/combined_texture_window.jpeg";
+  winPanel2.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
 
   winPanel3.name = "Window Panel 3";
   winPanel3.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
-  winPanel3.mOffset = glm::vec3(0.0f, 4.2f, 0.0f);
+  winPanel3.mOffset = glm::vec3(0.0f, 4.2f, 0.06f);
   winPanel3.mRotate = 90.0f;
   winPanel3.mModelPath = "Models/window_panel_3.obj";
-  winPanel3.mTexturePath = "Models/textures/window/combined_texture_window.jpeg";
+  winPanel3.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
 
   winPanel4.name = "Window Panel 4";
   winPanel4.mScale = glm::vec3(0.069f, 0.06f, 0.06f);
   winPanel4.mOffset = glm::vec3(0.15f, 4.2f, -10.15f);
   winPanel4.mRotate = 270.0f;
   winPanel4.mModelPath = "Models/window_panel_4.obj";
-  winPanel4.mTexturePath = "Models/textures/window/combined_texture_window.jpeg";
+  winPanel4.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
 
   meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
   meshes.push_back(sideTile);
@@ -615,6 +632,8 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   meshes.push_back(winPanel3);
   meshes.push_back(winPanel4);
   meshes.push_back(doorFrame);
+  meshes.push_back(projectorScreen);
+  //meshes.push_back(wallFront);
 }
 
 
@@ -645,8 +664,8 @@ void BenchPlacement(std::vector<Mesh3D>& meshes)
   Mesh3D refBench = meshes[0];
   meshes.erase(meshes.begin());
 
-  float distbwBenchRow = 1.5f;
-  float distbwBenchCol = 3.2f;
+  float distbwBenchRow = 1.57f;
+  float distbwBenchCol = 3.25f;
 
   float refX = refBench.mOffset.x;
   float refY = refBench.mOffset.y;
@@ -657,7 +676,7 @@ void BenchPlacement(std::vector<Mesh3D>& meshes)
     // exceptions !! 
     if (i == 0 || i == 5) continue; // these benches are no there in class
     if (i / 5 == 2) // Column 2 and column 3 have less spacing then other
-      refX = 0.07f;
+      refX = 0.7f;
 
     float newX = refX - (distbwBenchCol * (i / 5));
     float newY = refY;
