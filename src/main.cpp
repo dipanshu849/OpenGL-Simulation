@@ -507,6 +507,13 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   Mesh3D doorFrame;
   Mesh3D projectorScreen;
   Mesh3D wallFront;
+  Mesh3D switch1;
+  Mesh3D switch2;
+  Mesh3D switch3;
+  Mesh3D switch4;
+  Mesh3D wireCover;
+  Mesh3D wireCover2;
+  Mesh3D clock;
 
   bench.name = "Bench";
   bench.mScale = glm::vec3(0.077f, 0.07f, 0.06f);
@@ -618,6 +625,55 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   winPanel4.mModelPath = "Models/window_panel_4.obj";
   winPanel4.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
 
+  switch1.name = "Switch-1";
+  switch1.mScale = glm::vec3(0.085f, 0.075f, 0.085f);
+  switch1.mOffset = glm::vec3(0.0f, 0.7f, -3.6f);
+  switch1.mRotate = 270.0f;
+  switch1.mModelPath = "Models/switch_1.obj";
+  switch1.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
+
+  switch2.name = "Switch-2";
+  switch2.mScale = glm::vec3(0.6f, 0.6f, 0.7f);
+  switch2.mOffset = glm::vec3(-3.4f, 0.7f, 0.0f);
+  switch2.mRotate = 180.0f;
+  switch2.mModelPath = "Models/switch_2.obj";
+  switch2.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
+
+  switch3.name = "Switch-3";
+  switch3.mScale = glm::vec3(0.6f, 0.6f, 0.7f);
+  switch3.mOffset = glm::vec3(-12.5f, 0.7f, 0.0f);
+  switch3.mRotate = 180.0f;
+  switch3.mModelPath = "Models/switch_2.obj";
+  switch3.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
+
+  switch4.name = "Switch-4";
+  switch4.mScale = glm::vec3(0.4f, 0.36f, 0.4f);
+  switch4.mOffset = glm::vec3(0.0f, 2.0f, -3.2f);
+  switch4.mRotate = 270.0f;
+  switch4.mModelPath = "Models/switch_3.obj";
+  switch4.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
+
+  wireCover.name = "Wire-Cover 1";
+  wireCover.mScale = glm::vec3(0.6f, 66.0f, 0.6f);
+  wireCover.mOffset = glm::vec3(-3.4f, -11.65f, 0.0f);
+  wireCover.mRotate = 180.0f;
+  wireCover.mModelPath = "Models/wire_cover.obj";
+  wireCover.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
+
+  wireCover2.name = "Wire-Cover 2";
+  wireCover2.mScale = glm::vec3(148.0f, 0.7f, 0.5f);
+  wireCover2.mOffset = glm::vec3(45.3f, 0.675f, 0.0f);
+  wireCover2.mRotate = 180.0f;
+  wireCover2.mModelPath = "Models/wire_cover_2.obj";
+  wireCover2.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
+
+  clock.name = "Clock";
+  clock.mScale = glm::vec3(0.31f, 0.31f, 0.25f);
+  clock.mOffset = glm::vec3(-15.0f, 4.4f, -5.3f);
+  clock.mRotate = 90.0f;
+  clock.mModelPath = "Models/clock.obj";
+  clock.mTexturePath = "Models/textures/clock/combined_texture_clock.jpeg";
+
   meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
   meshes.push_back(sideTile);
   meshes.push_back(tile);
@@ -627,13 +683,24 @@ void ObjectCreation(std::vector<Mesh3D>& meshes)
   meshes.push_back(door);
   meshes.push_back(board);
   meshes.push_back(remote1);
+
   meshes.push_back(winPanel1);
   meshes.push_back(winPanel2);
   meshes.push_back(winPanel3);
   meshes.push_back(winPanel4);
+
   meshes.push_back(doorFrame);
   meshes.push_back(projectorScreen);
+
+  meshes.push_back(switch1);
+  meshes.push_back(switch2);
+  meshes.push_back(switch3);
+  meshes.push_back(switch4);
+
+  meshes.push_back(wireCover);
+  meshes.push_back(wireCover2);
   //meshes.push_back(wallFront);
+  meshes.push_back(clock);
 }
 
 
