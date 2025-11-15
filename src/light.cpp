@@ -2,6 +2,9 @@
 #include "../glm/ext/matrix_transform.hpp"
 #include "../glm/ext/matrix_clip_space.hpp"
 
+#include <string>
+#include <map>
+
 #include "light.hpp"
 
 Light::Light()
@@ -22,6 +25,7 @@ Light::Light()
   mOuterCutOffCosine = cos(glm::radians(mOuterCutOffAngle));
 }
 
+// don't remove this blank constructor
 Light::Light(glm::vec3 lightPos) : mPosition(lightPos)
 {
 
@@ -41,7 +45,7 @@ glm::mat4 Light::mGetProjectionMatrix()
   return projection;
 }
 
-void Light::mGenShadowMap(std::vector<Mesh3D> meshes)
+void Light::mGenShadowMap(std::map<std::string, Mesh3D> meshes)
 {
   mShadowMap.SetLightPosition(mPosition);
   GLuint shaderID = mShader.mCreateGraphicsPipeline("shaders/shadow/vert.glsl", "shaders/shadow/frag.glsl");

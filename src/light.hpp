@@ -4,13 +4,12 @@
 #include "../glm/ext/matrix_transform.hpp"
 
 #include <vector>
+#include <map>
 
 #include "shadowMap.hpp"
 #include "mesh.hpp"
 #include "shader.hpp"
 
-// forward declaration
-// otherwise it would fall in circular dependency with objects.hpp
 
 class Light
 {
@@ -38,6 +37,6 @@ class Light
     Light(glm::vec3);
     glm::mat4 mGetProjectionMatrix();
     glm::mat4 mGetViewMatrix();
-    void mGenShadowMap(std::vector<Mesh3D> meshes);
+    void mGenShadowMap(std::map<std::string, Mesh3D> meshes);
 };
 #endif

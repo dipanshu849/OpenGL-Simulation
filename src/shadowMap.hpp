@@ -5,6 +5,7 @@
 #include "../glm/ext/matrix_transform.hpp"
 
 #include <vector>
+#include <map>
 
 #include "mesh.hpp"
 
@@ -14,7 +15,7 @@ class ShadowMap
     GLuint mFrameBufferObject = 0;
     GLuint mGraphicsPipelineShaderProgram = 0;
 
-    void RenderOnFrameBuffer(std::vector<Mesh3D> meshes, glm::mat4, glm::mat4);
+    void RenderOnFrameBuffer(const std::map<std::string, Mesh3D>& meshes, glm::mat4, glm::mat4);
     void TransformObjects_N_SendUniformData(Mesh3D*, glm::mat4, glm::mat4);
  
  public:
@@ -27,7 +28,7 @@ class ShadowMap
    void CreateShadowMapFrameBufferObject();
    void CreateShadowMapTextureObject();
    void BindShadowMapFrameBufferTextureObject();
-   void GenShadowMap(std::vector<Mesh3D> meshes, glm::mat4, glm::mat4);
+   void GenShadowMap(const std::map<std::string, Mesh3D>& meshes, glm::mat4, glm::mat4);
 
 };
 #endif

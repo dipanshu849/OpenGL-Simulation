@@ -6,9 +6,11 @@
 #include "../glm/ext/matrix_transform.hpp"
 
 #include <vector>
+#include <map>
 
 #include "camera.hpp"
 #include "light.hpp"
+#include "mesh.hpp"
 
 struct App
 {
@@ -22,6 +24,7 @@ struct App
 
   GLFWwindow * mWindow = nullptr;
   GLuint mGraphicsPipelineShaderProgram = 0;
+  GLuint mNormalsGraphicsPipelineShaderProgram = 0;
 
   Light mLights[9];
   int mLightsNumber = 9;
@@ -32,13 +35,15 @@ struct App
   float mDistBwLightCol = 4.0f;
 
   Camera mCamera;
+  std::map<std::string, Mesh3D> meshes;
 };
 
 struct Grid
 {
   int mROW = 11;
   int mCOL = 16;
-  float mTileSize = 1.0f;
+  float mTileSizeX = 1.0f;
+  float mTileSizeY = 1.0f;
 
   GLuint mVertexArrayObject = 0; 
   GLuint mVertexBufferObjectH = 0;

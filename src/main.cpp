@@ -131,9 +131,9 @@ void initializeGrid()
        if (j == 0 || j == gGrid.mCOL - 1)
        {
          glm::vec3 tempCoordinate;
-         tempCoordinate.x = refCoordinate.x - (float)(j * gGrid.mTileSize);
+         tempCoordinate.x = refCoordinate.x - (float)(j * gGrid.mTileSizeX);
          tempCoordinate.y = refCoordinate.y;
-         tempCoordinate.z = refCoordinate.z - (float)(i * gGrid.mTileSize);
+         tempCoordinate.z = refCoordinate.z - (float)(i * gGrid.mTileSizeY);
          gGrid.mVertexDataH.push_back(tempCoordinate);
        }
     }
@@ -147,9 +147,9 @@ void initializeGrid()
        if (i == 0 || i == gGrid.mROW - 1)
        {
          glm::vec3 tempCoordinate;
-         tempCoordinate.x = refCoordinate.x - (float)(j * gGrid.mTileSize);
+         tempCoordinate.x = refCoordinate.x - (float)(j * gGrid.mTileSizeX);
          tempCoordinate.y = refCoordinate.y;
-         tempCoordinate.z = refCoordinate.z - (float)(i * gGrid.mTileSize);
+         tempCoordinate.z = refCoordinate.z - (float)(i * gGrid.mTileSizeY);
          gGrid.mVertexDataV.push_back(tempCoordinate);
        }
     }
@@ -339,49 +339,53 @@ void DisplayGrid(App* app)
 }
 
 
-void LightInformation(App* app)
+void LightInformation(App* app, GLuint graphicsPipeline)
 {
   // LightPosition
-  GLint location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightPos");
+  GLint location = glGetUniformLocation(graphicsPipeline, "u_lightPos");
   glUniform3f(location, app->mRefLightPos.x, app->mRefLightPos.y, app->mRefLightPos.z);
 
   // LightColor
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightColor");
+  location = glGetUniformLocation(graphicsPipeline, "u_lightColor");
   glUniform3f(location, app->mLightColor.x, app->mLightColor.y, app->mLightColor.z);
 
 
   // projection view matrix of light 
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightProjectionViewMatrix[0]");
+  location = glGetUniformLocation(graphicsPipeline, "u_lightProjectionViewMatrix[0]");
   glUniformMatrix4fv(location, 9, GL_FALSE, glm::value_ptr(app->mLightProjectionViewMatrixCombined[0]));
 
 
   // attenuation constants
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAttenLinear");
+  location = glGetUniformLocation(graphicsPipeline, "u_lightAttenLinear");
   glUniform1f(location, app->mLights[0].attenuationLinear);
   
   location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAttenQuad");
   glUniform1f(location, app->mLights[0].attenuationQuad);
 
   // traget direction
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightTargetDirection");
+  location = glGetUniformLocation(graphicsPipeline, "u_lightTargetDirection");
   glUniform3f(location, app->mLights[0].mTargetDirection.x, app->mLights[0].mTargetDirection.y, app->mLights[0].mTargetDirection.z);
 
 
-  // cone angle direction
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightInnerCutOffAngle");
+  // inner cone angle direction
+  location = glGetUniformLocation(graphicsPipeline, "u_lightInnerCutOffAngle");
   glUniform1f(location, app->mLights[0].mInnerCutOffAngle);
 
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightOuterCutOffAngle");
+  // outer cone angle direction
+  location = glGetUniformLocation(graphicsPipeline, "u_lightOuterCutOffAngle");
   glUniform1f(location, app->mLights[0].mOuterCutOffAngle);
   
   // type strength [ambient, specular, diffuse]
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightAmbientStrength");
+  // Ambient
+  location = glGetUniformLocation(graphicsPipeline, "u_lightAmbientStrength");
   glUniform1f(location, app->mLights[0].mAmbientStrength);
 
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightDiffuseStrength");
+  // Diffuse
+  location = glGetUniformLocation(graphicsPipeline, "u_lightDiffuseStrength");
   glUniform1f(location, app->mLights[0].mDiffuseStrength);
 
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_lightSpecularStrength");
+  // Specular
+  location = glGetUniformLocation(graphicsPipeline, "u_lightSpecularStrength");
   glUniform1f(location, app->mLights[0].mSpecularStrength);
 }
 
@@ -394,16 +398,13 @@ void PreDraw(App* app)
   glViewport(0, 0, app->mScreenWidth, app->mScreenHeight);
   glClearColor(1.f, 0.f, 0.f, 1.f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-
-  glUseProgram(app->mGraphicsPipelineShaderProgram);
 }
 
 
-
-void MeshTransformation(App* app, Mesh3D* mesh)
+void MeshTransformation(App* app, Mesh3D* mesh, GLuint graphicsPipeline)
 {
   // Local to world
-  GLint location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_model");
+  GLint location = glGetUniformLocation(graphicsPipeline, "u_model");
   glm::mat4 model = glm::translate(glm::mat4(1.0f), mesh->mOffset);
   model = glm::rotate(model, glm::radians(mesh->mRotate), glm::vec3(0.0f, 1.0f, 0.0f));
   model = glm::scale(model, mesh->mScale);
@@ -411,28 +412,30 @@ void MeshTransformation(App* app, Mesh3D* mesh)
 
 
   // World to camera
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_view");
+  location = glGetUniformLocation(graphicsPipeline, "u_view");
   glm::mat4 cameraSpace = app->mCamera.getViewMatrix(); 
   glUniformMatrix4fv(location, 1, GL_FALSE, &cameraSpace[0][0]);    
 
 
   // Real screen view
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_projection");
+  location = glGetUniformLocation(graphicsPipeline, "u_projection");
   glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)app->mScreenWidth/app->mScreenHeight, 0.1f, 100.0f);
   glUniformMatrix4fv(location, 1, GL_FALSE, &projection[0][0]);
 
 
   // ViewPosition
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_viewPos");
+  location = glGetUniformLocation(graphicsPipeline, "u_viewPos");
   glm::vec3 viewPos = app->mCamera.getViewPos();
   glUniform3f(location, viewPos.x, viewPos.y, viewPos.z);
 
 
   // toggleShading
-  location = glGetUniformLocation(app->mGraphicsPipelineShaderProgram, "u_isPhong");
+  location = glGetUniformLocation(graphicsPipeline, "u_isPhong");
   glUniform1i(location, app->mIsPhong);
 
-
+  // color
+  location = glGetUniformLocation(graphicsPipeline, "u_color");
+  glUniform3f(location, mesh->mColor.x, mesh->mColor.y, mesh->mColor.z);
 }
 
 
@@ -451,7 +454,7 @@ void Draw(Mesh3D* mesh, App* app)
 }
 
 
-void mainLoop(App* app, std::vector<Mesh3D> meshes) 
+void mainLoop(App* app) 
 {
 
   while (!glfwWindowShouldClose(app->mWindow))
@@ -461,16 +464,33 @@ void mainLoop(App* app, std::vector<Mesh3D> meshes)
     app->mDeltaTime = currentTime - app->mLastFrame;
     app->mLastFrame = currentTime;
   
-
     Input(app);
-
     PreDraw(app);
-
-    LightInformation(app);
     DisplayGrid(app);
-    for (Mesh3D mesh : meshes)
+
+    // 1. for simple meshes 
+    GLuint currentGraphicsPipeline = app->mGraphicsPipelineShaderProgram;
+    glUseProgram(currentGraphicsPipeline);
+    LightInformation(app, currentGraphicsPipeline);
+
+    for (auto& pair : gApp.meshes)
     {
-      MeshTransformation(app, &mesh);
+      Mesh3D& mesh = pair.second;
+      if (mesh.mGraphicsPipeline != 0) continue;
+      MeshTransformation(app, &mesh, currentGraphicsPipeline);
+      Draw(&mesh, app);
+    }
+
+    // 2. for normal meshes [walls and ceilings]
+    currentGraphicsPipeline = app->mNormalsGraphicsPipelineShaderProgram;
+    glUseProgram(currentGraphicsPipeline);
+    LightInformation(app, currentGraphicsPipeline);
+
+    for (auto& pair : gApp.meshes)
+    {
+      Mesh3D& mesh = pair.second;
+      if (mesh.mGraphicsPipeline == 0) continue;
+      MeshTransformation(app, &mesh, currentGraphicsPipeline);
       Draw(&mesh, app);
     }
 
@@ -487,226 +507,35 @@ void cleanUp()
   return;
 }
 
-
-
-void ObjectCreation(std::vector<Mesh3D>& meshes)
+void ObjectCreation(const char* name,
+                    glm::vec3 scale,
+                    glm::vec3 offset,
+                    GLfloat rotate,
+                    const char* modelPath,
+                    const char* texturePath = "",
+                    GLuint graphicsPipeline = 0,
+                    glm::vec3 color = glm::vec3(0.0))
 {
-  Mesh3D bench;
-  Mesh3D podium;
-  Mesh3D table;
-  Mesh3D door;
-  Mesh3D light;
-  Mesh3D board;
-  Mesh3D tile;
-  Mesh3D sideTile;
-  Mesh3D remote1;
-  Mesh3D winPanel1;
-  Mesh3D winPanel2;
-  Mesh3D winPanel3;
-  Mesh3D winPanel4;
-  Mesh3D doorFrame;
-  Mesh3D projectorScreen;
-  Mesh3D wallFront;
-  Mesh3D switch1;
-  Mesh3D switch2;
-  Mesh3D switch3;
-  Mesh3D switch4;
-  Mesh3D wireCover;
-  Mesh3D wireCover2;
-  Mesh3D clock;
+  Mesh3D mesh;
+  
+  mesh.name = name; 
+  mesh.mScale = scale;
+  mesh.mOffset = offset;
+  mesh.mRotate = rotate;
+  mesh.mModelPath = modelPath;
+  mesh.mTexturePath = texturePath;
+  mesh.mGraphicsPipeline = graphicsPipeline;
+  mesh.mColor = color;
 
-  bench.name = "Bench";
-  bench.mScale = glm::vec3(0.077f, 0.07f, 0.06f);
-  bench.mOffset = glm::vec3(-0.008f, 0.0f, -2.2f);
-  bench.mModelPath = "Models/bench_1.obj";
-  bench.mTexturePath = "Models/textures/combinedBenchTexture.png";
-
-  podium.name = "Podium";
-  podium.mScale = glm::vec3(0.16f, 0.16f, 0.16f);
-  podium.mOffset = glm::vec3(-2.2f, 0.0f, -1.05f);
-  podium.mRotate = 180.0f;
-  podium.mModelPath = "Models/podium_shaded.obj";
-  podium.mTexturePath = "Models/textures/podium/podium_combined_texture_2.jpeg";
-
-  table.name = "Table";
-  table.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
-  table.mOffset = glm::vec3(-5.6f, 0.0f, -3.6f);
-  table.mModelPath = "Models/table_shaded.obj";
-  table.mTexturePath = "Models/textures/table/table_combined_texture_new_new.jpeg";
-
-  door.name = "Door";
-  door.mScale = glm::vec3(0.07f, 0.07f, 0.06f);
-  door.mOffset = glm::vec3(-0.922f, 0.0f, -1.708f);
-  door.mRotate = 300.0f;
-  door.mModelPath = "Models/door_shaded.obj";
-  door.mTexturePath = "Models/textures/door/combined_texture.jpeg";
-
-  doorFrame.name = "Door-Frame";
-  doorFrame.mScale = glm::vec3(0.068f, 0.07f, 0.05f);
-  doorFrame.mOffset = glm::vec3(0.05f, 0.0f, -1.87f);
-  doorFrame.mRotate = 270.0f;
-  doorFrame.mModelPath = "Models/door_frame.obj";
-  doorFrame.mTexturePath = "Models/textures/door_frame/combined_texture_door_frame_2.jpeg";
-
-  light.name = "Light";
-  light.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
-  light.mOffset = glm::vec3(-4.0f, 4.93f, -2.0f);
-  light.mModelPath = "Models/light.obj";
-  light.mTexturePath = "Models/textures/light/texture.png";
-
-  board.name = "Board";
-  board.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
-  board.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
-  board.mRotate = 180.0f;
-  board.mModelPath = "Models/board_shaded.obj";
-  board.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
-
-  projectorScreen.name = "Projector-Screen";
-  projectorScreen.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
-  projectorScreen.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
-  projectorScreen.mRotate = 180.0f;
-  projectorScreen.mModelPath = "Models/projector_screen_1.obj";
-  projectorScreen.mTexturePath = "Models/textures/projector_screen/combined_projector_screen_texture.jpeg";
-
-  wallFront.name = "Front-Wall";
-  wallFront.mScale = glm::vec3(0.07f, 0.07f, 0.07f);
-  wallFront.mOffset = glm::vec3(-4.0f, 1.2f, 0.0f);
-  wallFront.mRotate = 180.0f;
-  wallFront.mModelPath = "Models/wall_front.obj";
-  // wallFront.mTexturePath = "Models/textures/board/board_combined_texture_1.jpeg";
-
-
-  tile.name = "Tile";
-  tile.mScale = glm::vec3(0.078f, 0.02f, 0.078f);
-  tile.mOffset = glm::vec3(0.0f, 0.0f, 0.0f);
-  tile.mRotate = 180.0f;
-  tile.mModelPath = "Models/tile.obj";
-  tile.mTexturePath = "Models/textures/tile/tile_texture_combined_1.jpeg";
-
-  sideTile.name = "Side-Tile";
-  sideTile.mScale = glm::vec3(0.078f, 0.078f, 0.078f);
-  sideTile.mOffset = glm::vec3(0.0f, 0.0f, 0.0f);
-  sideTile.mRotate = 180.0f;
-  sideTile.mModelPath = "Models/side_tile.obj";
-  sideTile.mTexturePath = "Models/textures/tile/tile_texture_combined_1.jpeg";
-
-  remote1.name = "Remote 1";
-  remote1.mScale = glm::vec3(0.016f, 0.018f, 0.016f);
-  remote1.mOffset = glm::vec3(-3.86f, 2.27f, 0.005f);
-  remote1.mRotate = 180.0f;
-  remote1.mModelPath = "Models/remote_1_shaded.obj";
-  remote1.mTexturePath = "Models/textures/remote/remote_1_texture.jpeg";
-
-  winPanel1.name = "Window Panel 1";
-  winPanel1.mScale = glm::vec3(0.066f, 0.06f, 0.06f);
-  winPanel1.mOffset = glm::vec3(0.15f, 4.2f, -8.2f);
-  winPanel1.mRotate = 270.0f;
-  winPanel1.mModelPath = "Models/window_panel_1_shaded.obj";
-  winPanel1.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
-
-  winPanel2.name = "Window Panel 2";
-  winPanel2.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
-  winPanel2.mOffset = glm::vec3(-14.7f, 4.2f, -10.15f);
-  winPanel2.mRotate = 0.0f;
-  winPanel2.mModelPath = "Models/window_panel_2.obj";
-  winPanel2.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
-
-  winPanel3.name = "Window Panel 3";
-  winPanel3.mScale = glm::vec3(0.06f, 0.06f, 0.06f);
-  winPanel3.mOffset = glm::vec3(0.0f, 4.2f, 0.06f);
-  winPanel3.mRotate = 90.0f;
-  winPanel3.mModelPath = "Models/window_panel_3.obj";
-  winPanel3.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
-
-  winPanel4.name = "Window Panel 4";
-  winPanel4.mScale = glm::vec3(0.069f, 0.06f, 0.06f);
-  winPanel4.mOffset = glm::vec3(0.15f, 4.2f, -10.15f);
-  winPanel4.mRotate = 270.0f;
-  winPanel4.mModelPath = "Models/window_panel_4.obj";
-  winPanel4.mTexturePath = "Models/textures/window/combined_window_texture.jpeg";
-
-  switch1.name = "Switch-1";
-  switch1.mScale = glm::vec3(0.085f, 0.075f, 0.085f);
-  switch1.mOffset = glm::vec3(0.0f, 0.7f, -3.6f);
-  switch1.mRotate = 270.0f;
-  switch1.mModelPath = "Models/switch_1.obj";
-  switch1.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
-
-  switch2.name = "Switch-2";
-  switch2.mScale = glm::vec3(0.6f, 0.6f, 0.7f);
-  switch2.mOffset = glm::vec3(-3.4f, 0.7f, 0.0f);
-  switch2.mRotate = 180.0f;
-  switch2.mModelPath = "Models/switch_2.obj";
-  switch2.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
-
-  switch3.name = "Switch-3";
-  switch3.mScale = glm::vec3(0.6f, 0.6f, 0.7f);
-  switch3.mOffset = glm::vec3(-12.5f, 0.7f, 0.0f);
-  switch3.mRotate = 180.0f;
-  switch3.mModelPath = "Models/switch_2.obj";
-  switch3.mTexturePath = "Models/textures/switch/combined_projector_screen_texture.jpeg";
-
-  switch4.name = "Switch-4";
-  switch4.mScale = glm::vec3(0.4f, 0.36f, 0.4f);
-  switch4.mOffset = glm::vec3(0.0f, 2.0f, -3.2f);
-  switch4.mRotate = 270.0f;
-  switch4.mModelPath = "Models/switch_3.obj";
-  switch4.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
-
-  wireCover.name = "Wire-Cover 1";
-  wireCover.mScale = glm::vec3(0.6f, 66.0f, 0.6f);
-  wireCover.mOffset = glm::vec3(-3.4f, -11.65f, 0.0f);
-  wireCover.mRotate = 180.0f;
-  wireCover.mModelPath = "Models/wire_cover.obj";
-  wireCover.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
-
-  wireCover2.name = "Wire-Cover 2";
-  wireCover2.mScale = glm::vec3(148.0f, 0.7f, 0.5f);
-  wireCover2.mOffset = glm::vec3(45.3f, 0.675f, 0.0f);
-  wireCover2.mRotate = 180.0f;
-  wireCover2.mModelPath = "Models/wire_cover_2.obj";
-  wireCover2.mTexturePath = "Models/textures/wire_cover/white_bluish.png";
-
-  clock.name = "Clock";
-  clock.mScale = glm::vec3(0.31f, 0.31f, 0.25f);
-  clock.mOffset = glm::vec3(-15.0f, 4.4f, -5.3f);
-  clock.mRotate = 90.0f;
-  clock.mModelPath = "Models/clock.obj";
-  clock.mTexturePath = "Models/textures/clock/combined_texture_clock.jpeg";
-
-  meshes.push_back(bench); // It should at first else [benchplacement function] will not work :)
-  meshes.push_back(sideTile);
-  meshes.push_back(tile);
-  meshes.push_back(light);
-  meshes.push_back(podium);
-  meshes.push_back(table);
-  meshes.push_back(door);
-  meshes.push_back(board);
-  meshes.push_back(remote1);
-
-  meshes.push_back(winPanel1);
-  meshes.push_back(winPanel2);
-  meshes.push_back(winPanel3);
-  meshes.push_back(winPanel4);
-
-  meshes.push_back(doorFrame);
-  meshes.push_back(projectorScreen);
-
-  meshes.push_back(switch1);
-  meshes.push_back(switch2);
-  meshes.push_back(switch3);
-  meshes.push_back(switch4);
-
-  meshes.push_back(wireCover);
-  meshes.push_back(wireCover2);
-  //meshes.push_back(wallFront);
-  meshes.push_back(clock);
+  //meshes.push_back(mesh);
+  gApp.meshes[name] = mesh;
 }
 
 
-void ObjectFilling(std::vector<Mesh3D>& meshes)
+void ObjectFilling()
 {
-  for (Mesh3D& mesh : meshes) {
+  for (auto& pair : gApp.meshes) {
+    Mesh3D& mesh = pair.second;
     if(!meshCreate(mesh.mModelPath, &mesh))       // Loading position, UV, normals for vertices
     {
       std::cout << "Failed to load model for " << mesh.name << std::endl;
@@ -726,10 +555,10 @@ void ObjectFilling(std::vector<Mesh3D>& meshes)
 }
 
 
-void BenchPlacement(std::vector<Mesh3D>& meshes)
+void BenchPlacement()
 {
-  Mesh3D refBench = meshes[0];
-  meshes.erase(meshes.begin());
+  Mesh3D refBench = gApp.meshes.at("Bench");
+  gApp.meshes.erase("Bench");
 
   float distbwBenchRow = 1.57f;
   float distbwBenchCol = 3.25f;
@@ -750,14 +579,14 @@ void BenchPlacement(std::vector<Mesh3D>& meshes)
     float newZ = refZ - (distbwBenchRow * (i % 5));
     
     refBench.mOffset = glm::vec3(newX, newY, newZ);
-    meshes.push_back(refBench);
+    gApp.meshes["Bench " + std::to_string(i)] = refBench;
   }
 }
 
 
-void LightPlacement(std::vector<Mesh3D>& meshes)
+void LightPlacement()
 {
-  Mesh3D refLight = meshes[1]; // as the starting bench was erased
+  Mesh3D refLight = gApp.meshes.at("Light"); 
 
   float distbwLightRow = 4.0f;
   float distbwLightCol = 4.0f;
@@ -773,13 +602,13 @@ void LightPlacement(std::vector<Mesh3D>& meshes)
     float newZ = refZ - (distbwLightRow * (i % 3));
     
     refLight.mOffset = glm::vec3(newX, newY, newZ);
-    meshes.push_back(refLight);
+    gApp.meshes["Light " + std::to_string(i)] = refLight;
   }
 }
 
-void TilePlacement(std::vector<Mesh3D>& meshes)
+void TilePlacement()
 {
-  Mesh3D refTile = meshes[0]; 
+  Mesh3D refTile = gApp.meshes.at("Tile"); 
 
   float distbwTileRow = 1.0f;
   float distbwTileCol = 1.0f;
@@ -795,14 +624,14 @@ void TilePlacement(std::vector<Mesh3D>& meshes)
     float newZ = refZ - (distbwTileRow * (i % 10));
     
     refTile.mOffset = glm::vec3(newX, newY, newZ);
-    meshes.push_back(refTile);
+    gApp.meshes["Tile " + std::to_string(i)] = refTile;
   }
 }
 
-void SideTilePlacement(std::vector<Mesh3D>& meshes)
+void SideTilePlacement()
 {
-  Mesh3D refTile = meshes[0]; 
-  meshes.erase(meshes.begin());
+  Mesh3D refTile = gApp.meshes.at("Tile Side"); 
+  gApp.meshes.erase("Tile Side");
 
   float distbwTileRow = 1.0f;
   float distbwTileCol = 1.0f;
@@ -811,6 +640,7 @@ void SideTilePlacement(std::vector<Mesh3D>& meshes)
   float refY = refTile.mOffset.y;
   float refZ = refTile.mOffset.z;
   float refR = refTile.mRotate;
+  int count = 0;
 
   for (int i = 0; i < 10; i++)
   {
@@ -820,7 +650,7 @@ void SideTilePlacement(std::vector<Mesh3D>& meshes)
     float newZ = refZ - (distbwTileRow * (i % 10));
     
     refTile.mOffset = glm::vec3(newX, newY, newZ);
-    meshes.push_back(refTile);
+    gApp.meshes["Tile Side " + std::to_string(count++)] = refTile;
   }
 
   for (int i = 0; i < 15; i++)
@@ -832,8 +662,7 @@ void SideTilePlacement(std::vector<Mesh3D>& meshes)
     
     refTile.mOffset = glm::vec3(newX, newY, newZ);
     refTile.mRotate = newR;
-    meshes.push_back(refTile);
-    
+    gApp.meshes["Tile Side " + std::to_string(count++)] = refTile;
   }
 
   for (int i = 0; i < 15; i++)
@@ -845,8 +674,7 @@ void SideTilePlacement(std::vector<Mesh3D>& meshes)
     
     refTile.mOffset = glm::vec3(newX, newY, newZ);
     refTile.mRotate = newR;
-    meshes.push_back(refTile);
-    
+    gApp.meshes["Tile Side " + std::to_string(count++)] = refTile;
   }
 
   for (int i = 0; i < 10; i++)
@@ -858,26 +686,255 @@ void SideTilePlacement(std::vector<Mesh3D>& meshes)
     
     refTile.mOffset = glm::vec3(newX, newY, newZ);
     refTile.mRotate = newR;
-    meshes.push_back(refTile);
+    gApp.meshes["Tile Side " + std::to_string(count++)] = refTile;
   }
+}
+
+void CeilingPlacement()
+{
+  Mesh3D refTile = gApp.meshes.at("Ceiling"); 
+
+  float distbwTileRow = 1.01f;
+  float distbwTileCol = 1.03f;
+
+  float refX = refTile.mOffset.x;
+  float refY = refTile.mOffset.y;
+  float refZ = refTile.mOffset.z;
+
+  for (int i = 1; i < 150; i++)
+  {
+    float newX = refX - (distbwTileCol * (i / 10));
+    float newY = refY;
+    float newZ = refZ - (distbwTileRow * (i % 10));
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    gApp.meshes["Ceiling " + std::to_string(i)] = refTile;
+  }
+}
+
+void initializeObjects()
+{
+  ObjectCreation("Bench", 
+                 glm::vec3(0.077f, 0.07f, 0.06f),
+                 glm::vec3(-0.008f, 0.0f, -2.2f),
+                 0.0f,
+                 "Models/bench_1.obj",
+                 "Models/textures/combinedBenchTexture.png");
+
+  ObjectCreation("Board", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-4.0f, 1.2f, 0.0f),
+                 180.0f,
+                 "Models/board_shaded.obj",
+                 "Models/textures/board/board_combined_texture_1.jpeg");
+
+  ObjectCreation("Ceiling", 
+                 glm::vec3(0.083f, 0.02f, 0.080f),
+                 glm::vec3(0.1f, 4.93f, 0.0f),
+                 180.0f,
+                 "Models/ceiling.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(171.0f, 171.0f, 196.0f));
+
+  ObjectCreation("Clock", 
+                 glm::vec3(0.31f, 0.31f, 0.25f),
+                 glm::vec3(-15.0f, 4.4f, -5.2f),
+                 90.0f,
+                 "Models/clock.obj",
+                 "Models/textures/clock/combined_texture_clock.jpeg");
+
+  ObjectCreation("Door", 
+                 glm::vec3(0.07f, 0.07f, 0.06f),
+                 glm::vec3(-0.922f, 0.0f, -1.708f),
+                 300.0f,
+                 "Models/door_shaded.obj",
+                 "Models/textures/door/combined_texture.jpeg");
+
+  ObjectCreation("Door Frame", 
+                 glm::vec3(0.068f, 0.07f, 0.05f),
+                 glm::vec3(-0.05f, 0.0f, -1.87f),
+                 270.0f,
+                 "Models/door_frame.obj",
+                 "Models/textures/door_frame/combined_texture_door_frame_2.jpeg");
+
+  ObjectCreation("Light", 
+                 glm::vec3(0.078f, 0.02f, 0.078f),
+                 glm::vec3(-4.0f, 4.93f, -2.0f),
+                 0.0f,
+                 "Models/light.obj",
+                 "Models/textures/light/texture.png");
+
+
+  ObjectCreation("Podium", 
+                 glm::vec3(0.16f, 0.16f, 0.16f),
+                 glm::vec3(-2.2f, 0.0f, -1.05f),
+                 180.0f,
+                 "Models/podium_shaded.obj",
+                 "Models/textures/podium/podium_combined_texture_2.jpeg");
+
+  ObjectCreation("Projector Screen", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-4.0f, 1.2f, 0.0f),
+                 180.0f,
+                 "Models/projector_screen_1.obj",
+                 "Models/textures/projector_screen/combined_projector_screen_texture.jpeg");
+
+  ObjectCreation("Remote", 
+                 glm::vec3(0.016f, 0.018f, 0.016f),
+                 glm::vec3(-3.86f, 2.27f, 0.005f),
+                 180.0f,
+                 "Models/remote_1_shaded.obj",
+                 "Models/textures/remote/remote_1_texture.jpeg");
+
+  ObjectCreation("Switch 1", 
+                 glm::vec3(0.085f, 0.075f, 0.085f),
+                 glm::vec3(0.0f, 0.7f, -3.6f),
+                 270.0f,
+                 "Models/switch_1.obj",
+                 "Models/textures/switch/combined_projector_screen_texture.jpeg");
+
+  ObjectCreation("Switch 2", 
+                 glm::vec3(0.6f, 0.6f, 0.7f),
+                 glm::vec3(-3.4f, 0.7f, 0.0f),
+                 180.0f,
+                 "Models/switch_2.obj",
+                 "Models/textures/switch/combined_projector_screen_texture.jpeg");
+
+  ObjectCreation("Switch 3", 
+                 glm::vec3(0.6f, 0.6f, 0.7f),
+                 glm::vec3(-12.5f, 0.7f, 0.0f),
+                 180.0f,
+                 "Models/switch_2.obj",
+                 "Models/textures/switch/combined_projector_screen_texture.jpeg");
+
+  ObjectCreation("Switch 4", 
+                 glm::vec3(0.4f, 0.36f, 0.4f),
+                 glm::vec3(0.0f, 2.0f, -3.2f),
+                 270.0f,
+                 "Models/switch_3.obj",
+                 "Models/textures/wire_cover/white_bluish.png");
+
+
+  ObjectCreation("Table", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-5.6f, 0.0f, -3.6f),
+                 0.0f,
+                 "Models/table_shaded.obj",
+                 "Models/textures/table/table_combined_texture_new_new.jpeg");
+
+  ObjectCreation("Tile", 
+                 glm::vec3(0.078f, 0.02f, 0.078f),
+                 glm::vec3(0.0f, 0.0f, 0.0f),
+                 180.0f,
+                 "Models/tile.obj",
+                 "Models/textures/tile/tile_texture_combined_1.jpeg");
+
+  ObjectCreation("Tile Side", 
+                 glm::vec3(0.078f, 0.078f, 0.078f),
+                 glm::vec3(0.0f, 0.0f, 0.0f),
+                 180.0f,
+                 "Models/side_tile.obj",
+                 "Models/textures/tile/tile_texture_combined_1.jpeg");
+
+  ObjectCreation("Wall Back", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-15.0f, 0.0f, -10.18f),
+                 0.0f,
+                 "Models/wall_back.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(230.0f, 226.0f, 209.0f));
+
+  ObjectCreation("Wall Front", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-4.0f, 1.2f, -0.01f),
+                 180.0f,
+                 "Models/wall_front.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(230.0f, 226.0f, 209.0f));
+
+  ObjectCreation("Wall Left", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(0.0f, 0.0f, 0.01f),
+                 90.0f,
+                 "Models/wall_left.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(230.0f, 226.0f, 209.0f));
+
+  ObjectCreation("Wall Right", 
+                 glm::vec3(0.07f, 0.07f, 0.07f),
+                 glm::vec3(-15.337f, 0.0f, 0.01f),
+                 90.0f,
+                 "Models/wall_right.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(230.0f, 226.0f, 209.0f));
+
+
+  ObjectCreation("Window Panel 1", 
+                 glm::vec3(0.066f, 0.06f, 0.06f),
+                 glm::vec3(0.15f, 4.2f, -8.2f),
+                 270.0f,
+                 "Models/window_panel_1_shaded.obj",
+                 "Models/textures/window/combined_window_texture.jpeg");
+
+  ObjectCreation("Window Panel 2", 
+                 glm::vec3(0.0618f, 0.06f, 0.06f),
+                 glm::vec3(-15.05f, 4.2f, -10.11f),
+                 0.0f,
+                 "Models/window_panel_2.obj",
+                 "Models/textures/window/combined_window_texture.jpeg");
+
+  ObjectCreation("Window Panel 3", 
+                 glm::vec3(0.0605f, 0.06f, 0.06f),
+                 glm::vec3(0.0f, 4.2f, 0.06f),
+                 90.0f,
+                 "Models/window_panel_3.obj",
+                 "Models/textures/window/combined_window_texture.jpeg");
+
+  ObjectCreation("Window Panel 4", 
+                 glm::vec3(0.069f, 0.06f, 0.06f),
+                 glm::vec3(0.15f, 4.2f, -10.15f),
+                 270.0f,
+                 "Models/window_panel_4.obj",
+                 "Models/textures/window/combined_window_texture.jpeg");
+
+  ObjectCreation("Wire Cover 1", 
+                 glm::vec3(0.6f, 66.0f, 0.6f),
+                 glm::vec3(-3.4f, -11.65f, 0.0f),
+                 180.0f,
+                 "Models/wire_cover.obj",
+                 "Models/textures/wire_cover/white_bluish.png");
+
+  ObjectCreation("Wire Cover 2", 
+                 glm::vec3(148.0f, 0.7f, 0.5f),
+                 glm::vec3(45.3f, 0.675f, 0.0f),
+                 180.0f,
+                 "Models/wire_cover_2.obj",
+                 "Models/textures/wire_cover/white_bluish.png");
 }
 
 int main()
 {
   initialization(&gApp);
   initializeGrid();
-
+  
+  // Pipline
   Shader shader;
   gApp.mGraphicsPipelineShaderProgram =  shader.mCreateGraphicsPipeline("shaders/vert.glsl", "shaders/frag.glsl");
+  gApp.mNormalsGraphicsPipelineShaderProgram = shader.mCreateGraphicsPipeline("shaders/normals/vert.glsl", "shaders/normals/frag.glsl");
 
-  std::vector<Mesh3D> meshes;
-  ObjectCreation(meshes);
-  ObjectFilling(meshes);
-
-  BenchPlacement(meshes);
-  SideTilePlacement(meshes);
-  LightPlacement(meshes);
-  TilePlacement(meshes);
+  // Objects
+  initializeObjects();
+  ObjectFilling();
+  BenchPlacement();
+  SideTilePlacement();
+  LightPlacement();
+  TilePlacement();
+  CeilingPlacement(); 
 
   // Lights
   glm::vec3 tempLightPos;
@@ -888,11 +945,11 @@ int main()
     tempLightPos.z = gApp.mRefLightPos.z - (gApp.mDistBwLightRow * (i % 3));
 
     gApp.mLights[i].mPosition = tempLightPos;
-    gApp.mLights[i].mGenShadowMap(meshes);
+    gApp.mLights[i].mGenShadowMap(gApp.meshes);
     gApp.mLightProjectionViewMatrixCombined[i] = gApp.mLights[i].mGetProjectionMatrix() * gApp.mLights[i].mGetViewMatrix();
   }
 
-  mainLoop(&gApp, meshes);
+  mainLoop(&gApp);
   cleanUp();
 
   return 0;

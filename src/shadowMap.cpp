@@ -2,6 +2,9 @@
 #include "../glm/ext/matrix_transform.hpp"
 #include "../glm/ext/matrix_clip_space.hpp"
 
+#include <string>
+#include <map>
+
 #include "shadowMap.hpp"
 #include "mesh.hpp"
 
@@ -52,7 +55,7 @@ void ShadowMap::BindShadowMapFrameBufferTextureObject()
 } 
 
 
-void ShadowMap::GenShadowMap(std::vector<Mesh3D> meshes, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix)
+void ShadowMap::GenShadowMap(const std::map<std::string, Mesh3D>& meshes, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix)
 {
   glEnable(GL_DEPTH_TEST);  
   glCullFace(GL_FRONT);
@@ -68,10 +71,11 @@ void ShadowMap::GenShadowMap(std::vector<Mesh3D> meshes, glm::mat4 lightViewMatr
 }
 
 
-void ShadowMap::RenderOnFrameBuffer(std::vector<Mesh3D> meshes, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix)
+void ShadowMap::RenderOnFrameBuffer(const std::map<std::string, Mesh3D>& meshes, glm::mat4 lightViewMatrix, glm::mat4 lightProjectionMatrix)
 {
-  for (Mesh3D mesh: meshes)
+  for (const auto& pair: meshes)
   {
+    Mesh3D mesh = pair.second;
     ShadowMap::TransformObjects_N_SendUniformData(&mesh, lightViewMatrix, lightProjectionMatrix);  
     glBindVertexArray(mesh.mVertexArrayObject);
     glDrawArrays(GL_TRIANGLES, 0, mesh.mVertexData.size() / 3);

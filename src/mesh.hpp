@@ -14,8 +14,10 @@ struct Mesh3D
   GLuint mPositionVertexBufferObject = 0;
   GLuint mUvVertexBufferObject = 0;
   GLuint mNormalVertexBufferObject = 0;
-
   GLuint mTextureObject = 0;
+
+  GLuint mGraphicsPipeline = 0;
+  glm::vec3 mColor = glm::vec3(1.0);
   
   std::vector<float> mVertexData; 
   std::vector<float> mUvData; 
