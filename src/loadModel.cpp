@@ -5,12 +5,15 @@
 
 #include "../glm/ext/vector_float2.hpp"
 #include "../glm/ext/vector_float3.hpp"
+#include "../glm/geometric.hpp"
 
 
 bool loadObj(const char* path,
             std::vector<float> &outVertices,
             std::vector<float> &outUvs,
-            std::vector<float> &outNormals)
+            std::vector<float> &outNormals,
+            std::vector<float> &outTangents,
+            std::vector<float> &outBitangents)
 {
   FILE* fp = fopen(path, "r");
   if (fp == NULL)
@@ -21,7 +24,7 @@ bool loadObj(const char* path,
 
   std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
   std::vector<glm::vec3> temp_vertices;
-  std::vector<glm::vec3> temp_uvs;
+  std::vector<glm::vec2> temp_uvs;
   std::vector<glm::vec3> temp_normals;
 
   // Formatting data
@@ -46,7 +49,7 @@ bool loadObj(const char* path,
     }
     else if (strcmp(lineHeader, "vt") == 0)
     {
-      glm::vec3 uv;
+      glm::vec2 uv;
       fscanf(fp, "%f %f\n", &uv.x, &uv.y);
       temp_uvs.push_back(uv);
     }
@@ -78,7 +81,7 @@ bool loadObj(const char* path,
   
   fclose(fp);
 
-  // Processing data
+  // Storing vertices as float not as glm 
   for (unsigned int i = 0; i < vertexIndices.size(); i++)
   {
     unsigned int index = vertexIndices[i];
@@ -104,6 +107,79 @@ bool loadObj(const char* path,
     outNormals.push_back(normal.x);
     outNormals.push_back(normal.y);
     outNormals.push_back(normal.z);
+  }
+
+
+  // Generating tangent and bitangent
+  std::vector<glm::vec3> temp_tangents(temp_vertices.size(), glm::vec3(0.0f));
+  std::vector<glm::vec3> temp_bitangents(temp_vertices.size(), glm::vec3(0.0f));
+
+  for (unsigned int i = 0; i < vertexIndices.size(); i+=3)
+  {
+    unsigned int i0 = vertexIndices[i];
+    unsigned int i1 = vertexIndices[i + 1];
+    unsigned int i2 = vertexIndices[i + 2];
+    
+    unsigned int i_uv0 = uvIndices[i]; 
+    unsigned int i_uv1 = uvIndices[i + 1];
+    unsigned int i_uv2 = uvIndices[i + 2];
+
+    glm::vec3 p0 = temp_vertices[i0 - 1];
+    glm::vec3 p1 = temp_vertices[i1 - 1];
+    glm::vec3 p2 = temp_vertices[i2 - 1];
+
+    glm::vec2 uv0 = temp_uvs[i_uv0 - 1];
+    glm::vec2 uv1 = temp_uvs[i_uv1 - 1];
+    glm::vec2 uv2 = temp_uvs[i_uv2 - 1];
+
+    glm::vec3 E1 = p1 - p0;
+    glm::vec3 E2 = p2 - p0;
+    glm::vec2 deltaUV1 = uv1 - uv0;
+    glm::vec2 deltaUV2 = uv2 - uv0;
+
+    float f = deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y;
+
+    if (fabs(f) < 1e-6f) // 1e-6 is a tiny "epsilon" value, close to zero
+    {
+        // This triangle has bad UVs, skip its contribution
+        continue;
+    }
+
+    float determinant = 1.0f / f; 
+    // float determinant = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+    glm::vec3 faceTangent;
+    faceTangent.x = determinant * (deltaUV2.y * E1.x - deltaUV1.y * E2.x);
+    faceTangent.y = determinant * (deltaUV2.y * E1.y - deltaUV1.y * E2.y);
+    faceTangent.z = determinant * (deltaUV2.y * E1.z - deltaUV1.y * E2.z);
+
+    glm::vec3 faceBitangent;
+    faceBitangent.x = determinant * (-deltaUV2.x * E1.x + deltaUV1.x * E2.x);
+    faceBitangent.y = determinant * (-deltaUV2.x * E1.y + deltaUV1.x * E2.y);
+    faceBitangent.z = determinant * (-deltaUV2.x * E1.z + deltaUV1.x * E2.z);
+    
+    temp_tangents[i0 - 1] += faceTangent;
+    temp_tangents[i1 - 1] += faceTangent;
+    temp_tangents[i2 - 1] += faceTangent;
+
+    temp_bitangents[i0 - 1] += faceBitangent;
+    temp_bitangents[i1 - 1] += faceBitangent;
+    temp_bitangents[i2 - 1] += faceBitangent;
+  }
+ 
+  // converting to required format
+  for (int i = 0; i < vertexIndices.size(); i++)
+  {
+    unsigned int vertexIndex = vertexIndices[i] - 1;
+
+    glm::vec3 norm_tangents = glm::normalize(temp_tangents[vertexIndex]);
+    outTangents.push_back(norm_tangents.x);
+    outTangents.push_back(norm_tangents.y);
+    outTangents.push_back(norm_tangents.z);
+
+    glm::vec3 norm_bitangents = glm::normalize(temp_bitangents[vertexIndex]);
+    outBitangents.push_back(norm_bitangents.x);
+    outBitangents.push_back(norm_bitangents.y);
+    outBitangents.push_back(norm_bitangents.z);
   }
     
   // std::cout << "In load model file" << std::endl;

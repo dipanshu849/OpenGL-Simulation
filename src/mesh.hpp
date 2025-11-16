@@ -14,6 +14,8 @@ struct Mesh3D
   GLuint mPositionVertexBufferObject = 0;
   GLuint mUvVertexBufferObject = 0;
   GLuint mNormalVertexBufferObject = 0;
+  GLuint mTangentVertexBufferObject = 0;
+  GLuint mBitangentVertexBufferObject = 0;
   GLuint mTextureObject = 0;
 
   GLuint mGraphicsPipeline = 0;
@@ -22,6 +24,8 @@ struct Mesh3D
   std::vector<float> mVertexData; 
   std::vector<float> mUvData; 
   std::vector<float> mNormalData;
+  std::vector<float> mTangentData;
+  std::vector<float> mBitangentData;
 
   glm::vec3 mOffset = glm::vec3(0.0f);
   GLfloat mRotate = 0.0f; // it will rotate long y-axis

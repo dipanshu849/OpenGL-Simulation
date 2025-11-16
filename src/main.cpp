@@ -170,8 +170,10 @@ bool meshCreate(const char* path, Mesh3D* mesh)
   std::vector<float> vertexData;
   std::vector<float> uvData;
   std::vector<float> normalData;
+  std::vector<float> tangentData;
+  std::vector<float> bitangentData;
 
-  if(loadObj(path, vertexData, uvData, normalData) == false)
+  if(loadObj(path, vertexData, uvData, normalData, tangentData, bitangentData) == false)
   {
     std::cout << "Problem occured in loading model" << std::endl;
     return false;
@@ -180,6 +182,8 @@ bool meshCreate(const char* path, Mesh3D* mesh)
   mesh->mVertexData = vertexData;
   mesh->mUvData = uvData;
   mesh->mNormalData = normalData;
+  mesh->mTangentData = tangentData;
+  mesh->mBitangentData = bitangentData;
 
   return true;
 }
@@ -277,10 +281,47 @@ void meshCTGdataTransfer(Mesh3D* mesh)
                         false,
                         0,
                         (void*)0);
+
+  // 4. start generating our tangents VBO
+  glGenBuffers(1, &mesh->mTangentVertexBufferObject);
+  glBindBuffer(GL_ARRAY_BUFFER, mesh->mTangentVertexBufferObject);
+  glBufferData(GL_ARRAY_BUFFER,
+              mesh->mTangentData.size() * sizeof(float),
+              mesh->mTangentData.data(),
+              GL_STATIC_DRAW);
+
+  //    Linking the normal attrib in VAO
+  glEnableVertexAttribArray(3);
+  glVertexAttribPointer(3,
+                        3,
+                        GL_FLOAT,
+                        false,
+                        0,
+                        (void*)0);
+
+  // 5. start generating our bitangents VBO
+  glGenBuffers(1, &mesh->mBitangentVertexBufferObject);
+  glBindBuffer(GL_ARRAY_BUFFER, mesh->mBitangentVertexBufferObject);
+  glBufferData(GL_ARRAY_BUFFER,
+              mesh->mBitangentData.size() * sizeof(float),
+              mesh->mBitangentData.data(),
+              GL_STATIC_DRAW);
+
+  //    Linking the normal attrib in VAO
+  glEnableVertexAttribArray(4);
+  glVertexAttribPointer(4,
+                        3,
+                        GL_FLOAT,
+                        false,
+                        0,
+                        (void*)0);
+
   glBindVertexArray(0);
   glDisableVertexAttribArray(0); 
   glDisableVertexAttribArray(1);
   glDisableVertexAttribArray(2);
+  glDisableVertexAttribArray(3);
+  glDisableVertexAttribArray(4);
 }
 
 
@@ -761,7 +802,7 @@ void initializeObjects()
                  glm::vec3(0.1f, 4.93f, 0.0f),
                  180.0f,
                  "Models/ceiling.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(171.0f, 171.0f, 196.0f));
 
@@ -770,7 +811,7 @@ void initializeObjects()
                  glm::vec3(0.1f, 4.93f, 0.0f),
                  180.0f,
                  "Models/ceiling_grid.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(170.0f, 170.0f, 191.0f));
 
@@ -879,7 +920,7 @@ void initializeObjects()
                  glm::vec3(-15.0f, 0.0f, -10.18f),
                  0.0f,
                  "Models/wall_back.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
 
@@ -888,7 +929,7 @@ void initializeObjects()
                  glm::vec3(-4.0f, 1.2f, -0.01f),
                  180.0f,
                  "Models/wall_front.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
 
@@ -897,7 +938,7 @@ void initializeObjects()
                  glm::vec3(0.0f, 0.0f, 0.01f),
                  90.0f,
                  "Models/wall_left.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
 
@@ -906,7 +947,7 @@ void initializeObjects()
                  glm::vec3(-15.337f, 0.0f, 0.01f),
                  90.0f,
                  "Models/wall_right.obj",
-                 "",
+                 "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
 

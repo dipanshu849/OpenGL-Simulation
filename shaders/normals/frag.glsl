@@ -2,12 +2,16 @@
 
 layout(location=0) in vec3 i_fragPos;
 layout(location=1) in vec3 i_normals;
-layout(location=2) in vec3 i_gouraudShadingResult;
-layout(location=3) in vec4 i_fragPosLightSpace[9];
+layout(location=2) in vec2 i_uv;
+layout(location=3) in vec3 i_tangents;
+layout(location=4) in vec3 i_bitangents;
+layout(location=5) in vec3 i_gouraudShadingResult;
+layout(location=6) in vec4 i_fragPosLightSpace[9];
 
 out vec4 o_fragColor;
 
 layout(binding=0) uniform sampler2D u_ShadowMaps[9];
+layout(binding=9) uniform sampler2D u_texture;
 
 uniform vec3 u_viewPos;
 uniform int u_isPhong;
@@ -35,6 +39,7 @@ float outerCutOff = cos(radians(u_lightOuterCutOffAngle));
 float gTexelSizeWidth = 1.0 / 4096.0f;
 float gTexelSizeHeight = 1.0 / 4096.0f;
 vec2 gTexelSize = vec2(gTexelSizeWidth, gTexelSizeHeight);
+
 
 float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap, vec3 lightDir)
 {
@@ -69,7 +74,7 @@ float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap, vec3 l
 }
 
 
-vec3 PhongShading() 
+vec3 PhongShading(vec3 normals) 
 {
   vec3 ambient = vec3(0.0f);
   vec3 diffuse = vec3(0.0f);
@@ -90,6 +95,7 @@ vec3 PhongShading()
     new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
 
     vec3 lightDir = normalize(new_lightPos - i_fragPos); // both in world space
+                                                         // goes from frag to light source
 
     vec3 shadowCoordinate = (i_fragPosLightSpace[i].xyz / i_fragPosLightSpace[i].w) * 0.5 + 0.5;
 
@@ -125,13 +131,12 @@ vec3 PhongShading()
       float attenuation = 1.0 / (1.0 + (u_lightAttenLinear * distance) + (u_lightAttenQuad * distance * distance));
 
       // diffuse 
-      vec3 norm = normalize(i_normals);
-      float diff = max(dot(norm, lightDir), 0.0);
+      float diff = max(dot(normals, lightDir), 0.0);
       diffuse += u_lightDiffuseStrength * diff * u_lightColor * attenuation * blending * lightIntensity;
 
       // specular 
       vec3 viewDir = normalize(u_viewPos - i_fragPos);
-      vec3 reflectDir = reflect(-lightDir, norm);
+      vec3 reflectDir = reflect(-lightDir, normals);
       float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
       specular += u_lightSpecularStrength * spec * u_lightColor * attenuation * blending * lightIntensity;
     }
@@ -150,10 +155,24 @@ void main()
   o_fragColor = vec4(r, g, b, 1.0);
   vec3 result = vec3(0.0, 0.0, 0.0); 
 
+  vec3 N = normalize(i_normals);
+  vec3 T = normalize(i_tangents);
+  T = normalize(T - dot(T, N) * N);
+  vec3 B = cross(N, T);
+  if (dot(cross(N, T), normalize(i_bitangents)) < 0.0) {
+      B = B * -1.0;
+  }
+
+  vec3 bumpMapNormal = texture(u_texture, i_uv).xyz;
+  bumpMapNormal = 2.0 * bumpMapNormal - vec3(1.0); // going from color space to normal space
+
+  mat3 TBN = mat3(T, B, N);
+  // transfrom from tangent space to world space
+  vec3 newNormals = normalize(TBN * bumpMapNormal);
 
   if (u_isPhong == 1)
   {
-    result = PhongShading() * vec3(o_fragColor);  
+    result = PhongShading(newNormals) * vec3(o_fragColor);  
   }
   else
   {
