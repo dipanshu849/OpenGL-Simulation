@@ -387,6 +387,10 @@ void LightInformation(App* app, GLuint graphicsPipeline)
   // Specular
   location = glGetUniformLocation(graphicsPipeline, "u_lightSpecularStrength");
   glUniform1f(location, app->mLights[0].mSpecularStrength);
+
+  // Extra light info
+  location = glGetUniformLocation(graphicsPipeline, "u_dirLightPosition");
+  glUniform3f(location, app->mExtraLightPosition.x, app->mExtraLightPosition.y, app->mExtraLightPosition.z);
 }
 
 
@@ -466,7 +470,7 @@ void mainLoop(App* app)
   
     Input(app);
     PreDraw(app);
-    DisplayGrid(app);
+    // DisplayGrid(app);
 
     // 1. for simple meshes 
     GLuint currentGraphicsPipeline = app->mGraphicsPipelineShaderProgram;
@@ -589,7 +593,7 @@ void LightPlacement()
   Mesh3D refLight = gApp.meshes.at("Light"); 
 
   float distbwLightRow = 4.0f;
-  float distbwLightCol = 4.0f;
+  float distbwLightCol = 4.12f;
 
   float refX = refLight.mOffset.x;
   float refY = refLight.mOffset.y;
@@ -694,7 +698,7 @@ void CeilingPlacement()
 {
   Mesh3D refTile = gApp.meshes.at("Ceiling"); 
 
-  float distbwTileRow = 1.01f;
+  float distbwTileRow = 1.0f;
   float distbwTileCol = 1.03f;
 
   float refX = refTile.mOffset.x;
@@ -711,6 +715,30 @@ void CeilingPlacement()
     gApp.meshes["Ceiling " + std::to_string(i)] = refTile;
   }
 }
+
+
+void CeilingGridPlacement()
+{
+  Mesh3D refTile = gApp.meshes.at("Ceiling Grid"); 
+
+  float distbwTileRow = 1.0f;
+  float distbwTileCol = 1.03f;
+
+  float refX = refTile.mOffset.x;
+  float refY = refTile.mOffset.y;
+  float refZ = refTile.mOffset.z;
+
+  for (int i = 1; i < 150; i++)
+  {
+    float newX = refX - (distbwTileCol * (i / 10));
+    float newY = refY;
+    float newZ = refZ - (distbwTileRow * (i % 10));
+    
+    refTile.mOffset = glm::vec3(newX, newY, newZ);
+    gApp.meshes["Ceiling Grid" + std::to_string(i)] = refTile;
+  }
+}
+
 
 void initializeObjects()
 {
@@ -736,6 +764,15 @@ void initializeObjects()
                  "",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(171.0f, 171.0f, 196.0f));
+
+  ObjectCreation("Ceiling Grid", 
+                 glm::vec3(0.08035f, 0.04f, 0.078f),
+                 glm::vec3(0.1f, 4.93f, 0.0f),
+                 180.0f,
+                 "Models/ceiling_grid.obj",
+                 "",
+                 gApp.mNormalsGraphicsPipelineShaderProgram,
+                 glm::vec3(170.0f, 170.0f, 191.0f));
 
   ObjectCreation("Clock", 
                  glm::vec3(0.31f, 0.31f, 0.25f),
@@ -935,6 +972,7 @@ int main()
   LightPlacement();
   TilePlacement();
   CeilingPlacement(); 
+  CeilingGridPlacement();
 
   // Lights
   glm::vec3 tempLightPos;

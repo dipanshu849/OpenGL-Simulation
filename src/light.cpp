@@ -19,8 +19,8 @@ Light::Light()
   mTargetDirection = glm::vec3(0.0f, -1.0f, 0.0f);
   mUpDirection = glm::vec3(0.0f, 0.0f, 1.0f);
 
-  mInnerCutOffAngle = 50.0f;
-  mOuterCutOffAngle = 60.0f;
+  mInnerCutOffAngle = 65.0f;
+  mOuterCutOffAngle = 70.0f;
   mInnerCutOffCosine = cos(glm::radians(mInnerCutOffAngle));
   mOuterCutOffCosine = cos(glm::radians(mOuterCutOffAngle));
 }

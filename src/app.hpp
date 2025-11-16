@@ -28,9 +28,12 @@ struct App
 
   Light mLights[9];
   int mLightsNumber = 9;
+
   glm::vec3 mRefLightPos = glm::vec3(-3.5f, 4.93f, -1.5f);
   glm::vec3 mLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
   glm::mat4 mLightProjectionViewMatrixCombined[9];
+  glm::vec3 mExtraLightPosition = glm::vec3(-0.5f, 4.3f, -1.0f);
+
   float mDistBwLightRow = 4.0f;
   float mDistBwLightCol = 4.0f;
 
