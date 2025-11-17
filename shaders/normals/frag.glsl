@@ -30,8 +30,8 @@ uniform float u_lightSpecularStrength;
 uniform vec3 u_dirLightPosition;
 
 const int numLights = 9;
-const float distBwLightRow = 4.0f;
-const float distBwLightCol = 4.0f;
+const float distBwLightRow = 4.01f;
+const float distBwLightCol = 4.1f;
 
 float innerCutOff = cos(radians(u_lightInnerCutOffAngle));
 float outerCutOff = cos(radians(u_lightOuterCutOffAngle));
@@ -63,7 +63,7 @@ float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap, vec3 l
       float depth = texture(shadowMap, shadowCoordinate.xy + offSet).r;
       float currentDepth = shadowCoordinate.z;
 
-      if (currentDepth > depth + 0.0003) // saves from shadow acne
+      if (currentDepth > depth + 0.0005) // saves from shadow acne
       {
         shadowSum += 1; // it is in shadow
       }
@@ -119,27 +119,55 @@ vec3 PhongShading(vec3 normals)
       //float blending = clamp((outerOffset - currOffset) / epsilon, 0.0, 1.0);
 
       vec3 fragPositionInLightViewSpace = i_fragPosLightSpace[i].xyz / i_fragPosLightSpace[i].w;
-      float innerSquare = 0.8f;
+      float innerSquare = 0.6f;
       float outerSquare = 1.0f;
       float epsilon = outerSquare - innerSquare;
       float currOffset = max(abs(fragPositionInLightViewSpace.x), abs(fragPositionInLightViewSpace.y));
 
-      float blending = clamp((outerSquare - currOffset) / epsilon, 0.0, 1.0);
+      float blending = clamp((outerSquare - currOffset) / epsilon, 0.5, 1.0);
 
       // attenuation
       float distance = length(i_fragPos - new_lightPos);
-      float attenuation = 1.0 / (1.0 + (u_lightAttenLinear * distance) + (u_lightAttenQuad * distance * distance));
+      float attenuation = 1.0 / (1.0 + (0.07 * distance) + (0.017 * distance * distance));
 
       // diffuse 
       float diff = max(dot(normals, lightDir), 0.0);
-      diffuse += u_lightDiffuseStrength * diff * u_lightColor * attenuation * blending * lightIntensity;
+      diffuse += 0.4 * u_lightDiffuseStrength * diff * u_lightColor * attenuation * blending * (lightIntensity + 0.01);
 
       // specular 
       vec3 viewDir = normalize(u_viewPos - i_fragPos);
       vec3 reflectDir = reflect(-lightDir, normals);
       float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
-      specular += u_lightSpecularStrength * spec * u_lightColor * attenuation * blending * lightIntensity;
+      specular += 0.3 * u_lightSpecularStrength * spec * u_lightColor * attenuation * blending * lightIntensity;
     }
+  }
+
+  // DIRECTIONAL LIGHT
+  {
+    //vec3 lightDir = normalize(u_dirLightPosition - i_fragPos); // both in world space
+    //float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
+
+    vec3 lightDir = normalize(-vec3(-1.0f, 0.5, 0.0));
+    float r = 255.0 / 255.0;
+    float g = 255.0 / 255.0;
+    float b = 255.0 / 255.0;
+    vec3 sunLightColor = vec3(r, g, b);
+
+    float dist = 1.0 - (5.0 - i_fragPos.y); 
+    float blend = clamp(dist, 0.0, 1.0);
+
+    float distHorizontal = (15.0 + i_fragPos.x) / 14.0;
+    float blend2 = clamp(distHorizontal, 0.1, 1.0);
+
+    // diffuse 
+    float diff = max(dot(normals, lightDir), 0.0);
+    diffuse += blend2 * blend * 1.4 * u_lightDiffuseStrength * diff * sunLightColor;
+
+    // specular 
+    vec3 viewDir = normalize(u_viewPos - i_fragPos);
+    vec3 reflectDir = reflect(-lightDir, normals);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
+    specular += blend2 * blend * 0.4 * u_lightSpecularStrength * spec * sunLightColor;
   }
 
   vec3 result = (ambient + diffuse + specular);

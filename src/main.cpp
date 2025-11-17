@@ -739,7 +739,7 @@ void CeilingPlacement()
 {
   Mesh3D refTile = gApp.meshes.at("Ceiling"); 
 
-  float distbwTileRow = 1.0f;
+  float distbwTileRow = 1.005f;
   float distbwTileCol = 1.03f;
 
   float refX = refTile.mOffset.x;
@@ -762,7 +762,7 @@ void CeilingGridPlacement()
 {
   Mesh3D refTile = gApp.meshes.at("Ceiling Grid"); 
 
-  float distbwTileRow = 1.0f;
+  float distbwTileRow = 1.005f;
   float distbwTileCol = 1.03f;
 
   float refX = refTile.mOffset.x;
@@ -799,7 +799,7 @@ void initializeObjects()
 
   ObjectCreation("Ceiling", 
                  glm::vec3(0.083f, 0.02f, 0.080f),
-                 glm::vec3(0.1f, 4.93f, 0.0f),
+                 glm::vec3(0.14f, 4.93f, 0.0f),
                  180.0f,
                  "Models/ceiling.obj",
                  "Models/normals/corse_texture_edited.jpeg",
@@ -807,8 +807,8 @@ void initializeObjects()
                  glm::vec3(171.0f, 171.0f, 196.0f));
 
   ObjectCreation("Ceiling Grid", 
-                 glm::vec3(0.08035f, 0.04f, 0.078f),
-                 glm::vec3(0.1f, 4.93f, 0.0f),
+                 glm::vec3(0.08035f, 0.04f, 0.0785f),
+                 glm::vec3(0.14f, 4.93f, 0.0f),
                  180.0f,
                  "Models/ceiling_grid.obj",
                  "Models/normals/corse_texture_edited.jpeg",
@@ -831,7 +831,7 @@ void initializeObjects()
 
   ObjectCreation("Door Frame", 
                  glm::vec3(0.068f, 0.07f, 0.05f),
-                 glm::vec3(-0.05f, 0.0f, -1.87f),
+                 glm::vec3(0.035f, 0.0f, -1.87f),
                  270.0f,
                  "Models/door_frame.obj",
                  "Models/textures/door_frame/combined_texture_door_frame_2.jpeg");
