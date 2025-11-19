@@ -14,11 +14,11 @@
 
 struct App
 {
-  int mScreenWidth = 1080;
-  int mScreenHeight = 720;
-  //int mScreenWidth = 1920;
-  //int mScreenHeight = 1080;
-  int mIsPhong = 0;
+  //int mScreenWidth = 1080;
+  //int mScreenHeight = 720;
+  int mScreenWidth = 1920;
+  int mScreenHeight = 1080;
+  int mIsPhong = 1;
   const char* mTitle = "CL-3";
   GLfloat mCameraSpeed = 10.0f;
   GLfloat mDeltaTime = 0;
@@ -41,6 +41,7 @@ struct App
 
   Camera mCamera;
   std::map<std::string, Mesh3D> meshes;
+  std::vector<glm::vec2> mPoissionSamplingPoints;
 };
 
 struct Grid

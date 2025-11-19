@@ -25,6 +25,7 @@ uniform float u_lightAmbientStrength;
 uniform float u_lightDiffuseStrength;
 uniform float u_lightSpecularStrength;
 uniform vec3 u_dirLightPosition;
+uniform vec2 u_poissionSamplingPoints[32];
 
 const int numLights = 9;
 const float distBwLightRow = 4.01f;
@@ -51,23 +52,22 @@ float calculateLightIntensity(vec3 shadowCoordinate, sampler2D shadowMap, vec3 l
     return 0.0;
 
   int shadowSum = 0;
+  float filterR = 4.0;
+  vec2 spread = gTexelSize * filterR;
 
-  for (int x = -1; x <= 1; x++)
+  for (int i = 0; i < 32; i++)
   {
-    for (int y = -1; y <= 1; y++)
-    {
-      vec2 offSet = vec2(x, y) * gTexelSize; 
-      float depth = texture(shadowMap, shadowCoordinate.xy + offSet).r;
-      float currentDepth = shadowCoordinate.z;
+    vec2 offSet = u_poissionSamplingPoints[i] * spread; 
+    float depth = texture(shadowMap, shadowCoordinate.xy + offSet).r;
+    float currentDepth = shadowCoordinate.z;
 
-      if (currentDepth > depth + 0.0005) // saves from shadow acne
-      {
-        shadowSum += 1; // it is in shadow
-      }
+    if (currentDepth > depth + 0.0005) // saves from shadow acne
+    {
+      shadowSum += 1; // it is in shadow
     }
   }
  
-  return (1.0 - (shadowSum / 9.0)); // So, if all are in shadow we return 0, means it have 0 light on it;
+  return (1.0 - (shadowSum / 32.0)); // So, if all are in shadow we return 0, means it have 0 light on it;
 }
 
 

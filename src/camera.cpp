@@ -15,7 +15,7 @@
 
 Camera::Camera()
 {
-  m_eye            = glm::vec3(0.0f, 0.0f, 0.0f);
+  m_eye            = glm::vec3(-7.5f, 2.4f, -5.5f);
   m_targetPosition = glm::vec3(0.0f, 0.0f, -1.0f);
   m_upDirection    = glm::vec3(0.0f, 1.0f, 0.0f); 
 

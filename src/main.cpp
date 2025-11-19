@@ -29,6 +29,7 @@
 #include <string>
 #include <fstream>
 #include <cstring>
+#include <cstdio>
 
 // My libraries
 #include "app.hpp"
@@ -97,6 +98,7 @@ void cursorPosition_callback(GLFWwindow* window, double xPos, double yPos)
 void initialization(App* app) 
 { 
   if (!glfwInit()) return;
+  glfwWindowHint(GLFW_SAMPLES, 4);
 
   app->mWindow = glfwCreateWindow(app->mScreenWidth, app->mScreenHeight, app->mTitle, NULL, NULL);
 
@@ -112,6 +114,8 @@ void initialization(App* app)
     std::cout << "Failed to initialize GLAD" << std::endl;
     return;
   }
+
+  glEnable(GL_MULTISAMPLE);
 
   glfwSetKeyCallback(app->mWindow, key_callback); 
   glfwSetInputMode(app->mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -390,11 +394,13 @@ void LightInformation(App* app, GLuint graphicsPipeline)
   location = glGetUniformLocation(graphicsPipeline, "u_lightColor");
   glUniform3f(location, app->mLightColor.x, app->mLightColor.y, app->mLightColor.z);
 
-
   // projection view matrix of light 
   location = glGetUniformLocation(graphicsPipeline, "u_lightProjectionViewMatrix[0]");
   glUniformMatrix4fv(location, 9, GL_FALSE, glm::value_ptr(app->mLightProjectionViewMatrixCombined[0]));
 
+  // poission sampling precomputed points
+  location = glGetUniformLocation(graphicsPipeline, "u_poissionSamplingPoints");
+  glUniform2fv(location, 32, glm::value_ptr(app->mPoissionSamplingPoints[0]));
 
   // attenuation constants
   location = glGetUniformLocation(graphicsPipeline, "u_lightAttenLinear");
@@ -406,7 +412,6 @@ void LightInformation(App* app, GLuint graphicsPipeline)
   // traget direction
   location = glGetUniformLocation(graphicsPipeline, "u_lightTargetDirection");
   glUniform3f(location, app->mLights[0].mTargetDirection.x, app->mLights[0].mTargetDirection.y, app->mLights[0].mTargetDirection.z);
-
 
   // inner cone angle direction
   location = glGetUniformLocation(graphicsPipeline, "u_lightInnerCutOffAngle");
@@ -441,7 +446,7 @@ void PreDraw(App* app)
   glCullFace(GL_BACK);
 
   glViewport(0, 0, app->mScreenWidth, app->mScreenHeight);
-  glClearColor(1.f, 0.f, 0.f, 1.f);
+  glClearColor(0.94f, 0.65f, 0.4f, 1.f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
 }
 
@@ -502,6 +507,10 @@ void Draw(Mesh3D* mesh, App* app)
 void mainLoop(App* app) 
 {
 
+  glUseProgram(app->mGraphicsPipelineShaderProgram);
+  LightInformation(app, app->mGraphicsPipelineShaderProgram);
+  glUseProgram(app->mNormalsGraphicsPipelineShaderProgram);
+  LightInformation(app, app->mNormalsGraphicsPipelineShaderProgram);
   while (!glfwWindowShouldClose(app->mWindow))
   {
     // get fps
@@ -516,7 +525,7 @@ void mainLoop(App* app)
     // 1. for simple meshes 
     GLuint currentGraphicsPipeline = app->mGraphicsPipelineShaderProgram;
     glUseProgram(currentGraphicsPipeline);
-    LightInformation(app, currentGraphicsPipeline);
+
 
     for (auto& pair : gApp.meshes)
     {
@@ -529,7 +538,7 @@ void mainLoop(App* app)
     // 2. for normal meshes [walls and ceilings]
     currentGraphicsPipeline = app->mNormalsGraphicsPipelineShaderProgram;
     glUseProgram(currentGraphicsPipeline);
-    LightInformation(app, currentGraphicsPipeline);
+    // LightInformation(app, currentGraphicsPipeline);
 
     for (auto& pair : gApp.meshes)
     {
@@ -551,6 +560,7 @@ void cleanUp()
   glfwTerminate();
   return;
 }
+
 
 void ObjectCreation(const char* name,
                     glm::vec3 scale,
@@ -888,6 +898,14 @@ void initializeObjects()
 
   ObjectCreation("Switch 4", 
                  glm::vec3(0.4f, 0.36f, 0.4f),
+                 glm::vec3(0.0f, 2.0f, -8.4f),
+                 270.0f,
+                 "Models/switch_3.obj",
+                 "Models/textures/wire_cover/white_bluish.png");
+
+
+  ObjectCreation("Switch 5", 
+                 glm::vec3(0.4f, 0.36f, 0.4f),
                  glm::vec3(0.0f, 2.0f, -3.2f),
                  270.0f,
                  "Models/switch_3.obj",
@@ -915,6 +933,7 @@ void initializeObjects()
                  "Models/side_tile.obj",
                  "Models/textures/tile/tile_texture_combined_1.jpeg");
 
+
   ObjectCreation("Wall Back", 
                  glm::vec3(0.07f, 0.07f, 0.07f),
                  glm::vec3(-15.0f, 0.0f, -10.18f),
@@ -933,6 +952,7 @@ void initializeObjects()
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
 
+
   ObjectCreation("Wall Left", 
                  glm::vec3(0.07f, 0.07f, 0.07f),
                  glm::vec3(0.0f, 0.0f, 0.01f),
@@ -941,6 +961,7 @@ void initializeObjects()
                  "Models/normals/corse_texture_edited.jpeg",
                  gApp.mNormalsGraphicsPipelineShaderProgram,
                  glm::vec3(230.0f, 226.0f, 209.0f));
+
 
   ObjectCreation("Wall Right", 
                  glm::vec3(0.07f, 0.07f, 0.07f),
@@ -957,28 +978,29 @@ void initializeObjects()
                  glm::vec3(0.15f, 4.2f, -8.2f),
                  270.0f,
                  "Models/window_panel_1_shaded.obj",
-                 "Models/textures/window/combined_window_texture.jpeg");
+                 "Models/textures/window/combined_window_texture_1.jpeg");
+
 
   ObjectCreation("Window Panel 2", 
                  glm::vec3(0.0618f, 0.06f, 0.06f),
                  glm::vec3(-15.05f, 4.2f, -10.11f),
                  0.0f,
                  "Models/window_panel_2.obj",
-                 "Models/textures/window/combined_window_texture.jpeg");
+                 "Models/textures/window/combined_window_texture_1.jpeg");
 
   ObjectCreation("Window Panel 3", 
                  glm::vec3(0.0605f, 0.06f, 0.06f),
                  glm::vec3(0.0f, 4.2f, 0.06f),
                  90.0f,
                  "Models/window_panel_3.obj",
-                 "Models/textures/window/combined_window_texture.jpeg");
+                 "Models/textures/window/combined_window_texture_1.jpeg");
 
   ObjectCreation("Window Panel 4", 
                  glm::vec3(0.069f, 0.06f, 0.06f),
                  glm::vec3(0.15f, 4.2f, -10.15f),
                  270.0f,
                  "Models/window_panel_4.obj",
-                 "Models/textures/window/combined_window_texture.jpeg");
+                 "Models/textures/window/combined_window_texture_1.jpeg");
 
   ObjectCreation("Wire Cover 1", 
                  glm::vec3(0.6f, 66.0f, 0.6f),
@@ -994,6 +1016,26 @@ void initializeObjects()
                  "Models/wire_cover_2.obj",
                  "Models/textures/wire_cover/white_bluish.png");
 }
+
+
+void GetPoissionSamplingData()
+{
+  FILE* fp;
+
+  fp = fopen("data.txt", "r");
+  // as not able to declare this in src/app.hpp, the compiler thinks it was a function
+  gApp.mPoissionSamplingPoints.resize(32);
+  int count = 0;
+  while(1)
+  {
+    int result = fscanf(fp, "%f %f%*c", &gApp.mPoissionSamplingPoints[count].x, &gApp.mPoissionSamplingPoints[count].y);  
+    if (result == EOF) break;
+    count++;
+  }
+
+  fclose(fp);
+}
+
 
 int main()
 {
@@ -1014,6 +1056,8 @@ int main()
   TilePlacement();
   CeilingPlacement(); 
   CeilingGridPlacement();
+
+  GetPoissionSamplingData();
 
   // Lights
   glm::vec3 tempLightPos;
