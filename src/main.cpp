@@ -510,11 +510,14 @@ void Draw(Mesh3D* mesh, App* app)
 
 void mainLoop(App* app) 
 {
-
   glUseProgram(app->mGraphicsPipelineShaderProgram);
   LightInformation(app, app->mGraphicsPipelineShaderProgram);
+
   glUseProgram(app->mNormalsGraphicsPipelineShaderProgram);
   LightInformation(app, app->mNormalsGraphicsPipelineShaderProgram);
+
+  glUseProgram(app->mCeilingLightGraphicsPipelineShaderProgram);
+  LightInformation(app, app->mCeilingLightGraphicsPipelineShaderProgram);
   while (!glfwWindowShouldClose(app->mWindow))
   {
     // get fps
@@ -547,7 +550,21 @@ void mainLoop(App* app)
     for (auto& pair : gApp.meshes)
     {
       Mesh3D& mesh = pair.second;
-      if (mesh.mGraphicsPipeline == 0) continue;
+      if (mesh.isLight || mesh.mGraphicsPipeline == 0) continue;
+      MeshTransformation(app, &mesh, currentGraphicsPipeline);
+      Draw(&mesh, app);
+    }
+
+    // 3. for Ceiling lights meshes
+    currentGraphicsPipeline = app->mCeilingLightGraphicsPipelineShaderProgram;
+    glUseProgram(currentGraphicsPipeline);
+    // LightInformation(app, currentGraphicsPipeline);
+
+    for (auto& pair : gApp.meshes)
+    {
+      Mesh3D& mesh = pair.second;
+      if ((!mesh.isLight && mesh.mGraphicsPipeline != 0) 
+           || mesh.mGraphicsPipeline == 0) continue;
       MeshTransformation(app, &mesh, currentGraphicsPipeline);
       Draw(&mesh, app);
     }
@@ -573,7 +590,8 @@ void ObjectCreation(const char* name,
                     const char* modelPath,
                     const char* texturePath = "",
                     GLuint graphicsPipeline = 0,
-                    glm::vec3 color = glm::vec3(0.0))
+                    glm::vec3 color = glm::vec3(0.0),
+                    bool isLight = false)
 {
   Mesh3D mesh;
   
@@ -585,6 +603,7 @@ void ObjectCreation(const char* name,
   mesh.mTexturePath = texturePath;
   mesh.mGraphicsPipeline = graphicsPipeline;
   mesh.mColor = color;
+  mesh.isLight = isLight;
 
   //meshes.push_back(mesh);
   gApp.meshes[name] = mesh;
@@ -855,7 +874,10 @@ void initializeObjects()
                  glm::vec3(-4.0f, 4.93f, -2.0f),
                  0.0f,
                  "Models/light.obj",
-                 "Models/textures/light/texture.png");
+                 "Models/textures/light/texture.png",
+                 gApp.mCeilingLightGraphicsPipelineShaderProgram,
+                 glm::vec3(0.0f, 0.0f, 0.0f),
+                 true);
 
 
   ObjectCreation("Podium", 
@@ -1050,6 +1072,7 @@ int main()
   Shader shader;
   gApp.mGraphicsPipelineShaderProgram =  shader.mCreateGraphicsPipeline("shaders/vert.glsl", "shaders/frag.glsl");
   gApp.mNormalsGraphicsPipelineShaderProgram = shader.mCreateGraphicsPipeline("shaders/normals/vert.glsl", "shaders/normals/frag.glsl");
+  gApp.mCeilingLightGraphicsPipelineShaderProgram = shader.mCreateGraphicsPipeline("shaders/ceilingLight/vert.glsl", "shaders/ceilingLight/frag.glsl");
 
   // Objects
   initializeObjects();

@@ -19,6 +19,7 @@ struct Mesh3D
   GLuint mTextureObject = 0;
 
   GLuint mGraphicsPipeline = 0;
+  bool isLight = false;
   glm::vec3 mColor = glm::vec3(1.0);
   
   std::vector<float> mVertexData; 

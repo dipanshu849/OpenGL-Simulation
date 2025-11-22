@@ -27,6 +27,7 @@ struct App
   GLFWwindow * mWindow = nullptr;
   GLuint mGraphicsPipelineShaderProgram = 0;
   GLuint mNormalsGraphicsPipelineShaderProgram = 0;
+  GLuint mCeilingLightGraphicsPipelineShaderProgram = 0;
 
   Light mLights[9];
   int mLightsNumber = 9;
