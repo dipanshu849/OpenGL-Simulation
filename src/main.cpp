@@ -6,6 +6,7 @@
   TO NAVIGATE:            WASD           -> in XZ axis
                           Top Down arrow -> Y axis
                           Mouse
+                          Press "C" to toggle bw phong and gouroud shading
 
 
   TO UNDERSTAND THE CODE: Start from main function [at very bottom]               
@@ -98,7 +99,9 @@ void cursorPosition_callback(GLFWwindow* window, double xPos, double yPos)
 void initialization(App* app) 
 { 
   if (!glfwInit()) return;
-  glfwWindowHint(GLFW_SAMPLES, 4);
+  
+  // anti-anliasing
+  glfwWindowHint(GLFW_SAMPLES, 8);
 
   app->mWindow = glfwCreateWindow(app->mScreenWidth, app->mScreenHeight, app->mTitle, NULL, NULL);
 
@@ -334,6 +337,7 @@ void Input(App* app)
   if(glfwGetKey(app->mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(app->mWindow, true);
 }
+
 
 void DisplayGrid(App* app)
 {

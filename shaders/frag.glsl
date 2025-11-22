@@ -100,22 +100,7 @@ vec3 PhongShading()
     float lightIntensity = calculateLightIntensity(shadowCoordinate, u_ShadowMaps[i], lightDir); 
  
     {
-      // 1. spot light - Circle shape 
-      // float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
-                                                                       // the lightDir is coming towards light and the
-                                                                       // u_lightTragetDirection was pointing away
-                                                                       // so we inversed it to get both vector in same side
-      // float epsilon = innerCutOff - outerCutOff;
-      // float blending = clamp((theta - outerCutOff) / epsilon, 0.2, 1.0);
-
-      // 2. spot light [square shape] - using perspective method
-      //float dist = new_lightPos.y - i_fragPos.y;
-      //float innerOffset = dist * tan(u_lightInnerCutOffAngle);
-      //float outerOffset = dist * tan(u_lightOuterCutOffAngle);
-      //float currOffset = max(abs(i_fragPos.x - new_lightPos.x), abs(i_fragPos.z -  new_lightPos.z));
-      //float epsilon = outerOffset - innerOffset;
-      //float blending = clamp((outerOffset - currOffset) / epsilon, 0.0, 1.0);
-
+      // spot light [square shape] - using perspective method
       vec3 fragPositionInLightViewSpace = i_fragPosLightSpace[i].xyz / i_fragPosLightSpace[i].w;
       float innerSquare = 0.8f;
       float outerSquare = 1.0f;
@@ -142,43 +127,10 @@ vec3 PhongShading()
     ///
   }
 
-
-  // the extra light
-  //{
-  //      vec3 lightDir = normalize(u_dirLightPosition - i_fragPos); // both in world space
-  //      float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
-
-  //      // attenuation
-  //      float distance = length(i_fragPos - u_dirLightPosition);
-  //      float attenuation = 1.0 / (1.0 + (u_lightAttenLinear * distance) + (u_lightAttenQuad * distance * distance));
-
-  //      {
-  //        // diffuse 
-  //        vec3 norm = normalize(i_normals);
-  //        float diff = max(dot(norm, lightDir), 0.0);
-  //        diffuse += 0.4 * u_lightDiffuseStrength * diff * u_lightColor * attenuation;
-  //        //diffuse += (cos(radians(45.0)) - theta) *  0.4 * u_lightDiffuseStrength * diff * u_lightColor;
-
-  //        // specular 
-  //        vec3 viewDir = normalize(u_viewPos - i_fragPos);
-  //        vec3 reflectDir = reflect(-lightDir, norm);
-  //        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
-  //        specular += 0.4 * u_lightSpecularStrength * spec * u_lightColor * attenuation;
-  //        //specular += (cos(radians(45.0)) - theta) * 0.3 * u_lightSpecularStrength * spec * u_lightColor;
-  //      }
-  //}
-
-
   vec3 result = (ambient + diffuse + specular);
   return result;
 }
 
-//void main()
-//{
-//vec3 shadowCoordinate = (i_fragPosLightSpace[6].xyz / i_fragPosLightSpace[8].w) * 0.5 + 0.5;
-//vec3 shadowMapColor = texture(u_ShadowMaps[8], shadowCoordinate.xy).rrr;
-//
-//}
 
 void main() 
 {

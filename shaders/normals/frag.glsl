@@ -102,22 +102,6 @@ vec3 PhongShading(vec3 normals)
     float lightIntensity = calculateLightIntensity(shadowCoordinate, u_ShadowMaps[i], lightDir); 
 
     {
-      // 1. spot light - Circle shape 
-      // float theta = dot(lightDir, normalize(-u_lightTargetDirection)); // now both point in same direction [towards light source]
-                                                                       // the lightDir is coming towards light and the
-                                                                       // u_lightTragetDirection was pointing away
-                                                                       // so we inversed it to get both vector in same side
-      // float epsilon = innerCutOff - outerCutOff;
-      // float blending = clamp((theta - outerCutOff) / epsilon, 0.0, 1.0);
-
-      // 2. spot light [square shape] - using perspective method
-      //float dist = new_lightPos.y - i_fragPos.y;
-      //float innerOffset = dist * tan(u_lightInnerCutOffAngle);
-      //float outerOffset = dist * tan(u_lightOuterCutOffAngle);
-      //float currOffset = max(abs(i_fragPos.x - new_lightPos.x), abs(i_fragPos.z -  new_lightPos.z));
-      //float epsilon = outerOffset - innerOffset;
-      //float blending = clamp((outerOffset - currOffset) / epsilon, 0.0, 1.0);
-
       vec3 fragPositionInLightViewSpace = i_fragPosLightSpace[i].xyz / i_fragPosLightSpace[i].w;
       float innerSquare = 0.6f;
       float outerSquare = 1.0f;
@@ -128,7 +112,7 @@ vec3 PhongShading(vec3 normals)
 
       // attenuation
       float distance = length(i_fragPos - new_lightPos);
-      float attenuation = 1.0 / (1.0 + (0.07 * distance) + (0.017 * distance * distance));
+      float attenuation = 1.0 / (1.0 + (0.09 * distance) + (0.032 * distance * distance));
 
       // diffuse 
       float diff = max(dot(normals, lightDir), 0.0);

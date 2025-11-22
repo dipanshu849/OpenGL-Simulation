@@ -21,33 +21,74 @@ uniform mat4 u_projection;
 uniform vec3 u_lightPos;
 uniform vec3 u_lightColor;
 uniform mat4 u_lightProjectionViewMatrix[9];
+uniform float u_lightAttenLinear;
+uniform float u_lightAttenQuad;
+uniform vec3 u_lightTargetDirection;
+uniform float u_lightInnerCutOffAngle;
+uniform float u_lightOuterCutOffAngle;
+uniform float u_lightAmbientStrength;
+uniform float u_lightDiffuseStrength;
+uniform float u_lightSpecularStrength;
+uniform vec3 u_dirLightPosition;
 
 uniform vec3 u_viewPos; // for specular
 uniform int u_isPhong;
 
-vec3 GouraudShading(vec3 o_fragPos, vec3 o_normals)
+const int numLights = 9;
+const float distBwLightRow = 4.01f;
+const float distBwLightCol = 4.1f;
+
+float innerCutOff = cos(radians(u_lightInnerCutOffAngle));
+float outerCutOff = cos(radians(u_lightOuterCutOffAngle));
+
+vec3 GouraudShading(vec3 o_fragPos, vec3 o_normals) 
 {
-  // ambient
-  float ambientStrength = 0.1;
-  vec3 ambient = ambientStrength * u_lightColor;
+  vec3 ambient = vec3(0.0f);
+  vec3 diffuse = vec3(0.0f);
+  vec3 specular = vec3(0.0f);
 
-  // diffuse [point light]
-  vec3 norm = normalize(o_normals);
-  vec3 lightDir = normalize(u_lightPos - o_fragPos); // both in world space
-  float diff = max(dot(norm, lightDir), 0.0);
-  vec3 diffuse = diff * u_lightColor;
+  vec3 new_lightPos = vec3(0.0f);
+  float refX = u_lightPos.x;
+  float refY = u_lightPos.y;
+  float refZ = u_lightPos.z;
 
-  // specular [left]
-  float specularStrength = 0.5;
-  vec3 viewDir = normalize(u_viewPos - o_fragPos);
-  vec3 reflectDir = reflect(-lightDir, norm);
-  float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
-  vec3 specular = specularStrength * spec * u_lightColor;
+  // Ambient
+  ambient = u_lightAmbientStrength * u_lightColor;
 
+  for (int i = 0; i < numLights; i++)
+  {
+    new_lightPos.x = refX -  (distBwLightCol * (i / 3));
+    new_lightPos.y = refY;
+    new_lightPos.z = refZ - (distBwLightRow * (i % 3)); 
+
+
+    vec3 lightDir = normalize(new_lightPos - o_fragPos); // both in world space
+                                                         // Now the light goes from frag to light source
+                                                         // same as how normal goes
+ 
+    {
+      // attenuation
+      float distance = length(o_fragPos - new_lightPos);
+      float attenuation = 1.0 / (1.0 + (u_lightAttenLinear * distance) + (u_lightAttenQuad * distance * distance));
+
+      // diffuse 
+      vec3 norm = normalize(o_normals);
+      float diff = max(dot(norm, lightDir), 0.0);
+      diffuse += u_lightDiffuseStrength * diff * u_lightColor * attenuation;
+
+      // specular 
+      vec3 viewDir = normalize(u_viewPos - o_fragPos);
+      vec3 reflectDir = reflect(-lightDir, norm);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
+      specular += 0.8 * u_lightSpecularStrength * spec * u_lightColor * attenuation;
+    }
+    ///
+  }
 
   vec3 result = (ambient + diffuse + specular);
   return result;
 }
+
 
 void main()
 {
